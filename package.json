@@ -1,7 +1,7 @@
 {
   "name": "@mdvp/cli",
-  "version": "1.31.1",
-  "description": "Machine Design Vision Protocol \u2014 gives agents eyes to understand design quality",
+  "version": "1.31.2",
+  "description": "Machine Design Vision Protocol — gives agents eyes to understand design quality",
   "bin": {
     "mdvp": "./cli.mjs"
   },
