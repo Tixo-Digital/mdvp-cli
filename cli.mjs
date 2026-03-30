@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url'
 
 import { apiGet, apiPost, pickModule, API } from './lib/http.mjs'
 import { loadConfig, saveConfig, CONFIG_DIR, CONFIG_FILE } from './lib/config.mjs'
-import { VERSION, CATS, R, HELP } from './lib/constants.mjs'
+import { VERSION, CATS, R, WELCOME, HELP_OVERVIEW, HELP_TOPICS, HELP_TOPIC_BY_COMMAND } from './lib/constants.mjs'
 import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar, parseDomain, toTextFormat } from './lib/format.mjs'
 import { cmdAudit, cmdAuditLocal } from './commands/audit.mjs'
 import { cmdCompare, cmdTop } from './commands/compare.mjs'
@@ -17,10 +17,11 @@ import { cmdHire, cmdRecrawl, cmdSubmit } from './commands/hire.mjs'
 
 async function main() {
   const argv = process.argv.slice(2)
-  const flags = new Set(argv.filter((a) => a.startsWith("--") && !a.includes("=")))
+  const flags = new Set(argv.filter((a) => (a.startsWith("--") || a.startsWith("-")) && !a.includes("=")))
   const flagValues = Object.fromEntries(argv.filter((a) => a.includes("=")).map((a) => a.replace("--", "").split("=")))
-  const positional = argv.filter((a) => !a.startsWith("--"))
+  const positional = argv.filter((a) => !(a.startsWith("--") || /^-[a-zA-Z]$/.test(a)))
   const [cmd, arg1, arg2] = positional
+  const wantsHelp = flags.has("--help") || flags.has("-h")
   const cfg = loadConfig()
   const opts = {
     json: flags.has("--json"),
@@ -42,8 +43,31 @@ async function main() {
     const child = spawn(process.execPath, [mcpPath], { stdio: "inherit" })
     child.on("exit", (code) => process.exit(code ?? 0))
     return
-  } else if (!cmd || cmd === "help" || cmd === "--help" || cmd === "-h") {
-    console.log(HELP)
+  } else if (!cmd && wantsHelp) {
+    console.log(`${HELP_OVERVIEW}\n`)
+  } else if (!cmd) {
+    console.log(`${WELCOME}\n`)
+  } else if (cmd === "help") {
+    const topic = arg1 ? arg1.toLowerCase() : null
+    if (!topic) {
+      console.log(`${HELP_OVERVIEW}\n`)
+      return
+    }
+    if (HELP_TOPICS[topic]) {
+      console.log(`${HELP_TOPICS[topic]}\n`)
+      return
+    }
+    console.error(`${YELLOW}Unknown help topic: ${topic}${R}\n`)
+    console.log(`${HELP_OVERVIEW}\n`)
+    process.exit(1)
+  } else if (wantsHelp && cmd) {
+    const topic = HELP_TOPIC_BY_COMMAND[cmd]
+    if (topic && HELP_TOPICS[topic]) {
+      console.log(`${HELP_TOPICS[topic]}\n`)
+      return
+    }
+    console.log(`${HELP_OVERVIEW}\n`)
+    return
   } else if (cmd === "login") {
     await cmdLogin()
   } else if (cmd === "audit" && arg1) {
@@ -207,4 +231,3 @@ main().catch((err) => {
   console.error(`${RED}Error: ${err.message}${R}`)
   process.exit(1)
 })
-
