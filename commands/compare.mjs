@@ -1,11 +1,21 @@
 import { apiGet, API } from '../lib/http.mjs'
-import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar } from '../lib/format.mjs'
+import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar, parseDomain } from '../lib/format.mjs'
 import { R } from '../lib/constants.mjs'
 import { CATS } from '../lib/constants.mjs'
 
-async function cmdCompare(da, db) {
+async function loadSites(apiKey) {
+  const data = await apiGet(`/dataset?limit=800`, API, apiKey ? { "x-api-key": apiKey } : {})
+  if (data?.error) {
+    console.error(`${RED}${data.error}${R}`)
+    if (/api key/i.test(data.error)) console.error(`${DIM}Run: npx @mdvp/cli login${R}`)
+    process.exit(1)
+  }
+  return data.sites ?? []
+}
+
+async function cmdCompare(da, db, opts = {}) {
   ;[da, db] = [da, db].map(parseDomain)
-  const sites = (await apiGet(`/dataset?limit=800`)).sites ?? []
+  const sites = await loadSites(opts.apiKey)
   const a = sites.find((s) => s.id === da)
   const b = sites.find((s) => s.id === db)
   if (!a) { console.error(`${RED}not found: ${da}${R}`); process.exit(1) }
@@ -23,8 +33,8 @@ async function cmdCompare(da, db) {
   console.log()
 }
 
-async function cmdTop(n, worst) {
-  const sites = (await apiGet(`/dataset?limit=800`)).sites ?? []
+async function cmdTop(n, worst, opts = {}) {
+  const sites = await loadSites(opts.apiKey)
   const sorted = (worst ? sites.sort((a, b) => a.overall_score - b.overall_score) : sites.sort((a, b) => b.overall_score - a.overall_score)).slice(0, n)
   console.log(`\n  ${"#".padEnd(4)}  ${"Domain".padEnd(28)}  ${"Score".padEnd(6)}  Grade  Label`)
   console.log(`  ${"─".repeat(4)}  ${"─".repeat(28)}  ${"─".repeat(6)}  ─────  ─────────`)

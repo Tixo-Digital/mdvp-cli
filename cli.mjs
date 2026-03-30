@@ -77,11 +77,11 @@ async function main() {
   } else if (cmd === "balance") {
     await cmdBalance(opts)
   } else if (cmd === "compare" && arg1 && arg2) {
-    await cmdCompare(arg1, arg2)
+    await cmdCompare(arg1, arg2, opts)
   } else if (cmd === "top") {
-    await cmdTop(parseInt(arg1 || "10") || 10, false)
+    await cmdTop(parseInt(arg1 || "10") || 10, false, opts)
   } else if (cmd === "worst") {
-    await cmdTop(parseInt(arg1 || "10") || 10, true)
+    await cmdTop(parseInt(arg1 || "10") || 10, true, opts)
   } else if (cmd === "stats") {
     const d = await apiGet("/dataset/stats")
     if (opts.json) { console.log(JSON.stringify(d, null, 2)); return }
@@ -215,7 +215,13 @@ async function main() {
   } else if (cmd === "hire" || cmd === "apply" || cmd === "serve") {
     await cmdHire(opts)
   } else if (cmd === "label" && arg1) {
-    const sites = (await apiGet(`/dataset?limit=800`)).sites ?? []
+    const data = await apiGet(`/dataset?limit=800`, API, opts.apiKey ? { "x-api-key": opts.apiKey } : {})
+    if (data?.error) {
+      console.error(`${RED}${data.error}${R}`)
+      if (/api key/i.test(data.error)) console.error(`${DIM}Run: npx @mdvp/cli login${R}`)
+      process.exit(1)
+    }
+    const sites = data.sites ?? []
     const filtered = sites.filter((s) => s.label === arg1).sort((a, b) => b.overall_score - a.overall_score).slice(0, 20)
     if (!filtered.length) { console.error(`No sites with label: ${arg1}`); process.exit(1) }
     console.log(`\n  ${filtered.length} sites · label=${arg1}\n`)

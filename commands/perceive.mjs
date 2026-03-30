@@ -1,6 +1,6 @@
 import { API, pickModule } from '../lib/http.mjs'
 import { loadConfig } from '../lib/config.mjs'
-import { DIM, RED, YELLOW } from '../lib/format.mjs'
+import { DIM, RED, YELLOW, parseDomain } from '../lib/format.mjs'
 import { R } from '../lib/constants.mjs'
 import { spawn } from 'child_process'
 import { existsSync, writeFileSync, mkdirSync, unlinkSync } from 'fs'

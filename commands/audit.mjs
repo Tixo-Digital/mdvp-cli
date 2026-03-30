@@ -121,15 +121,26 @@ async function cmdAudit(domain, opts) {
   }
 
   process.stderr.write(`${DIM}fetching ${domain}...${R}\n`)
+  const headers = apiKey ? { "x-api-key": apiKey } : {}
 
   let site = null
   try {
-    const direct = await apiGet(`/dataset/${domain}`)
+    const direct = await apiGet(`/dataset/${domain}`, API, headers)
+    if (direct?.error && /api key/i.test(direct.error)) {
+      console.error(`${RED}${direct.error}${R}`)
+      console.error(`${DIM}Run: npx @mdvp/cli login${R}`)
+      process.exit(1)
+    }
     if (direct && direct.id) site = direct
   } catch (_) {}
 
   if (!site) {
-    const data = await apiGet(`/dataset?limit=1000`)
+    const data = await apiGet(`/dataset?limit=1000`, API, headers)
+    if (data?.error && /api key/i.test(data.error)) {
+      console.error(`${RED}${data.error}${R}`)
+      console.error(`${DIM}Run: npx @mdvp/cli login${R}`)
+      process.exit(1)
+    }
     site = (data.sites ?? []).find((s) => s.id === domain) ?? null
   }
 
