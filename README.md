@@ -72,8 +72,6 @@ Lowest: originality (38) · color (44) · spacing (51)
 
 ## How it works
 
-![MDVP scoring pipeline](docs/assets/algorithm-flow.gif)
-
 Puppeteer opens the URL, `getComputedStyle()` is read on every element, the scorer groups 12 categories into four named components, and a signal registry of independent AI-pattern detectors penalises the `originality` component. See [the methodology paper](docs/methodology.md) for the full algorithm, weight table, and prior-work comparison.
 
 ## Documentation
