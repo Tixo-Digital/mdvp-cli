@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-06-02T12:26:56.204Z",
+  "method": "deterministic ablation on DOM metrics (no crawl, no human labels)",
+  "individual": [
+    {
+      "step": "baseline (strong design system)",
+      "factor": "—",
+      "overall": 95,
+      "grade": "A+",
+      "originality": 95
+    },
+    {
+      "step": "+ interFont",
+      "factor": "Inter as primary font",
+      "overall": 92,
+      "grade": "A+",
+      "originality": 80,
+      "d_overall": -3,
+      "d_originality": -15
+    },
+    {
+      "step": "+ tailwindPalette",
+      "factor": "Tailwind purple-pink-blue palette",
+      "overall": 90,
+      "grade": "A+",
+      "originality": 85,
+      "d_overall": -5,
+      "d_originality": -10
+    },
+    {
+      "step": "+ pills",
+      "factor": "pill radius everywhere (9999px)",
+      "overall": 93,
+      "grade": "A+",
+      "originality": 83,
+      "d_overall": -2,
+      "d_originality": -12
+    },
+    {
+      "step": "+ noTokens",
+      "factor": "no design tokens (<5 custom props)",
+      "overall": 92,
+      "grade": "A+",
+      "originality": 87,
+      "d_overall": -3,
+      "d_originality": -8
+    },
+    {
+      "step": "+ sparse",
+      "factor": "sparse content (45 elements)",
+      "overall": 70,
+      "grade": "B+",
+      "originality": 52,
+      "d_overall": -25,
+      "d_originality": -43
+    }
+  ],
+  "cumulative": [
+    {
+      "step": "baseline",
+      "overall": 95,
+      "grade": "A+",
+      "originality": 95
+    },
+    {
+      "step": "+ interFont",
+      "overall": 92,
+      "grade": "A+",
+      "originality": 80
+    },
+    {
+      "step": "+ tailwindPalette",
+      "overall": 87,
+      "grade": "A",
+      "originality": 70
+    },
+    {
+      "step": "+ pills",
+      "overall": 70,
+      "grade": "B+",
+      "originality": 52
+    },
+    {
+      "step": "+ noTokens",
+      "overall": 60,
+      "grade": "B-",
+      "originality": 44
+    },
+    {
+      "step": "+ sparse",
+      "overall": 60,
+      "grade": "B-",
+      "originality": 0
+    },
+    {
+      "step": "reference vibecoded fixture",
+      "overall": 60,
+      "grade": "B-",
+      "originality": 0
+    }
+  ],
+  "monotonicNonIncreasing": true,
+  "delta": {
+    "overall": 35,
+    "originality": 95
+  }
+}

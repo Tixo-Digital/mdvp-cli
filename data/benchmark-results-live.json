@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-06-02T12:37:12.884Z",
+  "n": 8,
+  "succeeded": 8,
+  "overall": {
+    "mean": 72.3,
+    "median": 73.5,
+    "min": 60,
+    "max": 79
+  },
+  "rows": [
+    {
+      "domain": "stripe.com",
+      "ok": true,
+      "overall": 66,
+      "grade": "B",
+      "css_health": 54,
+      "originality": 92
+    },
+    {
+      "domain": "linear.app",
+      "ok": true,
+      "overall": 60,
+      "grade": "B-",
+      "css_health": 53,
+      "originality": 62
+    },
+    {
+      "domain": "vercel.com",
+      "ok": true,
+      "overall": 77,
+      "grade": "A-",
+      "css_health": 86,
+      "originality": 87
+    },
+    {
+      "domain": "tailwindcss.com",
+      "ok": true,
+      "overall": 74,
+      "grade": "B+",
+      "css_health": 71,
+      "originality": 94
+    },
+    {
+      "domain": "github.com",
+      "ok": true,
+      "overall": 73,
+      "grade": "B+",
+      "css_health": 70,
+      "originality": 92
+    },
+    {
+      "domain": "figma.com",
+      "ok": true,
+      "overall": 79,
+      "grade": "A-",
+      "css_health": 89,
+      "originality": 92
+    },
+    {
+      "domain": "railway.app",
+      "ok": true,
+      "overall": 77,
+      "grade": "A-",
+      "css_health": 75,
+      "originality": 77
+    },
+    {
+      "domain": "posthog.com",
+      "ok": true,
+      "overall": 72,
+      "grade": "B+",
+      "css_health": 65,
+      "originality": 91
+    }
+  ]
+}

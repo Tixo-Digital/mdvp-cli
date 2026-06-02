@@ -1,0 +1,13 @@
+{
+  "note": "Reference panel of sites widely regarded for strong design systems. Used for face-validity checks (do acclaimed sites score well?), not for ranking or labeling any site negatively. Scores reflect a single live DOM snapshot and will drift over time.",
+  "reference_design_systems": [
+    "stripe.com",
+    "linear.app",
+    "vercel.com",
+    "tailwindcss.com",
+    "github.com",
+    "figma.com",
+    "railway.app",
+    "posthog.com"
+  ]
+}

@@ -348,7 +348,7 @@ Full system architecture, API protocol, and self-hosting notes: [docs/architectu
 git clone https://github.com/Tixo-Digital/mdvp-cli
 cd mdvp-cli
 npm ci
-npm test          # 75 tests, node:test built-in, zero devDeps
+npm test          # 89 tests, node:test built-in, zero devDeps
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -358,6 +358,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Citing
 
 If you use MDVP in research, cite it via the "Cite this repository" button (powered by [`CITATION.cff`](CITATION.cff)). A preprint draft of the methodology is in [`docs/paper.md`](docs/paper.md).
+
+Reproducible validation — a deterministic sensitivity/ablation study and a live reference-panel crawl — is documented in [`docs/benchmark.md`](docs/benchmark.md), along with notes on why a Webthetics-style human-rating correlation is not yet computable (their 2013 screenshot corpus vs. MDVP's live-DOM scoring).
 
 ---
 
