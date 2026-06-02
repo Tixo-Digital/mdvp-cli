@@ -198,6 +198,18 @@ npx @mdvp/cli audit myapp.com --local --check   # DESIGN.md errors fail the buil
 
 ---
 
+## Badge
+
+Once a site is in the dataset (`npx @mdvp/cli submit yoursite.com`), show its score in your README:
+
+```markdown
+[![MDVP](https://img.shields.io/endpoint?url=https://api.mdvp.dev/badge/yoursite.com)](https://mdvp.dev)
+```
+
+The endpoint returns a [shields.io endpoint](https://shields.io/badges/endpoint-badge) payload — label `design`, message `A 87`, colored by grade. It reflects the latest score for that domain.
+
+---
+
 ## JSON schema
 
 ```json
@@ -340,6 +352,12 @@ npm test          # 75 tests, node:test built-in, zero devDeps
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## Citing
+
+If you use MDVP in research, cite it via the "Cite this repository" button (powered by [`CITATION.cff`](CITATION.cff)). A preprint draft of the methodology is in [`docs/paper.md`](docs/paper.md).
 
 ---
 

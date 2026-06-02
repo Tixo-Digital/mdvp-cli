@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: "MDVP: Deterministic, Explainable Design-Quality Measurement for Web Interfaces"
+message: "If you use MDVP in your research, please cite it using this metadata."
+type: software
+authors:
+  - given-names: Nikita
+    family-names: Evseev
+    affiliation: Tixo Digital
+repository-code: "https://github.com/Tixo-Digital/mdvp-cli"
+url: "https://mdvp.dev"
+abstract: >-
+  MDVP measures the design quality of any live web page through four
+  deterministic pillars — objective CSS/DOM metrics, perceptual color
+  science (Oklab color distance and APCA contrast), Shannon entropy as a
+  design-consistency proxy, and a registry of AI-pattern ("vibe-code")
+  detectors — plus optional spec-relative compliance against a DESIGN.md
+  file. Scoring is bit-identical for a given DOM snapshot, requires no
+  trained weights or GPU, and runs locally via Puppeteer.
+keywords:
+  - design quality
+  - css metrics
+  - oklab
+  - apca contrast
+  - shannon entropy
+  - ai-generated ui detection
+  - design systems
+  - static analysis
+  - web accessibility
+license: MIT
+version: 1.31.3
+date-released: "2026-06-02"
