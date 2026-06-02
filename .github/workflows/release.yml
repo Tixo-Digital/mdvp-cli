@@ -1,0 +1,97 @@
+name: Release
+
+# Trigger: push a semver tag — e.g. `git tag v1.32.0 && git push --tags`
+# The tag version MUST match package.json version (enforced below).
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]*'
+
+permissions:
+  contents: write   # create GitHub Release
+  id-token: write   # npm provenance (OIDC)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ── 1. Full CI matrix ─────────────────────────────────────────────────────
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        node: ['18', '20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  # ── 2. Verify tag matches package.json ────────────────────────────────────
+  version-check:
+    name: Tag ↔ package.json version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check versions match
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          echo "Tag: $TAG | package.json: $PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "ERROR: tag v$TAG does not match package.json version $PKG"
+            echo "Run: npm version $TAG --no-git-tag-version, commit, then retag."
+            exit 1
+          fi
+
+  # ── 3. Publish to npm ─────────────────────────────────────────────────────
+  publish:
+    name: Publish to npm
+    needs: [test, version-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ── 4. GitHub Release with auto-generated notes ───────────────────────────
+  github-release:
+    name: GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so --generate-notes can diff tags
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Release $GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
