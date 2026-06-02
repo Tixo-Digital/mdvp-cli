@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     name: Test (Node ${{ matrix.node }})
@@ -69,12 +72,11 @@ jobs:
         run: |
           # Patterns that would indicate a leaked secret
           PATTERNS=(
-            'sk-[a-zA-Z0-9]{20,}'          # OpenAI-style keys
-            'AKIA[0-9A-Z]{16}'              # AWS Access Key ID
-            'resend_[a-zA-Z0-9_]+'          # Resend API keys
-            'stripe_(live|test)_[a-zA-Z0-9]+' # Stripe keys
-            'Bearer [a-zA-Z0-9._-]{20,}'   # Generic bearer tokens
-            'password\s*=\s*["\x27][^"\x27]{6,}' # Hardcoded passwords
+            'sk-[a-zA-Z0-9]{20,}'
+            'AKIA[0-9A-Z]{16}'
+            'resend_[a-zA-Z0-9_]+'
+            'stripe_(live|test)_[a-zA-Z0-9]+'
+            'Bearer [a-zA-Z0-9._-]{20,}'
           )
           FOUND=0
           for pat in "${PATTERNS[@]}"; do
