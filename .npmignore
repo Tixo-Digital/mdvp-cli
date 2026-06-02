@@ -9,3 +9,5 @@ AGENTS.md
 node_modules/
 npm-debug.log*
 action/
+scripts/
+docs/

@@ -34,8 +34,14 @@
     "type": "git",
     "url": "git+https://github.com/Tixo-Digital/mdvp-cli.git"
   },
+  "bugs": {
+    "url": "https://github.com/Tixo-Digital/mdvp-cli/issues"
+  },
   "homepage": "https://mdvp.dev",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"
   }
