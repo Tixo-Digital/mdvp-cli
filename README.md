@@ -12,7 +12,6 @@
 [![CI](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
-[![MDVP](https://img.shields.io/endpoint?url=https://api.mdvp.dev/badge/mdvp.dev)](https://mdvp.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Design quality measurement for any live URL.** Runs locally via Puppeteer — no API key, no account, no baseline needed.
@@ -78,15 +77,9 @@ Puppeteer opens the URL, `getComputedStyle()` is read on every element, the scor
 - [Benchmark](docs/benchmark.md) — sensitivity / ablation + live reference panel
 - [Development](docs/development.md) — setup, tests, adding a signal, cutting a release
 
-## Add a badge to your README
+## Add a score badge to your project
 
-Once a site is in the dataset (`npx @mdvp/cli submit yoursite.com`), show its score:
-
-```markdown
-[![MDVP](https://img.shields.io/endpoint?url=https://api.mdvp.dev/badge/yoursite.com)](https://mdvp.dev)
-```
-
-The endpoint returns a [shields.io endpoint](https://shields.io/badges/endpoint-badge) payload — label `design`, message `A 87`, colored by grade. It reflects the latest score for that domain.
+Show your MDVP score in your project's README: [docs/badge.md](docs/badge.md). Submit your site, drop in a shields.io endpoint, done.
 
 ## Contributing
 
