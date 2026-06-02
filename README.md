@@ -6,6 +6,26 @@ MDVP (Machine Design Vision Protocol) is a structured protocol for visual unders
 - Protocol spec: https://mdvp.dev/spec.md
 - Web: https://mdvp.dev
 - Open-source readiness: [docs/OPEN_SOURCE_READINESS.md](docs/OPEN_SOURCE_READINESS.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+
+## How it works
+
+```mermaid
+flowchart LR
+    URL[URL] -->|--local| Puppeteer[Puppeteer\ncrawler-worker.mjs]
+    Puppeteer -->|page.evaluate| Extract[extract.js\nDOM metrics]
+    Extract -->|metrics JSON| Scorer[scorer.mjs\n12 categories]
+    Scorer --> Colors[color-science.mjs\nOklab · APCA]
+    Scorer -->|groupComponents| Groups["css_health\nvisual_quality\nstructure\noriginality"]
+    Groups --> Thresholds[thresholds.mjs\n.mdvprc config]
+    Thresholds -->|violations| Exit["exit 1\n(--check flag)"]
+    Groups --> Output[score output]
+
+    URL -->|cloud mode| API[api.mdvp.dev\nhistorical dataset]
+    API --> Output
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for sequence diagrams, scoring pipeline detail, and design decisions.
 
 ## Open Source Status
 

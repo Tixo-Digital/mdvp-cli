@@ -9,6 +9,19 @@
   "engines": {
     "node": ">=18"
   },
+  "scripts": {
+    "test": "node --test 'test/**/*.test.mjs'"
+  },
+  "files": [
+    "cli.mjs",
+    "mcp.mjs",
+    "commands/",
+    "engine/",
+    "lib/",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
   "keywords": [
     "design",
     "audit",
