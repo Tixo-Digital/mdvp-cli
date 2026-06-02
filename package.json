@@ -10,7 +10,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test 'test/**/*.test.mjs'"
+    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs"
   },
   "files": [
     "cli.mjs",
