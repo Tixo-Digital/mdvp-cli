@@ -5,6 +5,13 @@ MDVP (Machine Design Vision Protocol) is a structured protocol for visual unders
 - Docs: https://mdvp.dev/docs
 - Protocol spec: https://mdvp.dev/spec.md
 - Web: https://mdvp.dev
+- Open-source readiness: [docs/OPEN_SOURCE_READINESS.md](docs/OPEN_SOURCE_READINESS.md)
+
+## Open Source Status
+
+This repository is the intended public, open-source entry point for MDVP. It contains the CLI and MCP server that let agents audit, perceive, compare, and submit web interfaces through the MDVP API. The hosted API, crawler infrastructure, payment system, private datasets, and production deployment configuration are separate services and are not part of this package.
+
+The package is MIT licensed and accepts focused contributions that improve CLI reliability, MCP interoperability, protocol examples, documentation, and safe local crawler workflows.
 
 ---
 
@@ -115,8 +122,8 @@ List top-scored sites in the dataset.
 
 ```bash
 npx @mdvp/cli top
-npx @mdvp/cli top --worst
-npx @mdvp/cli top --label=premium
+npx @mdvp/cli worst
+npx @mdvp/cli label premium
 ```
 
 ```
@@ -131,15 +138,31 @@ Labels: `premium`, `good`, `vibecoded`, `bad`
 
 ---
 
+### `label <label>`
+
+List scored sites with a dataset label.
+
+```bash
+npx @mdvp/cli label premium
+npx @mdvp/cli label good
+npx @mdvp/cli label vibecoded
+npx @mdvp/cli label bad
+```
+
+Labels: `premium`, `good`, `vibecoded`, `bad`
+
+---
+
 ### `submit <domain>`
 
 Submit a URL for crawl. Results are available in roughly 60 seconds.
 
 ```bash
 npx @mdvp/cli submit myapp.com
+npx @mdvp/cli submit myapp.com --local
 ```
 
-Requires an API key. Run `npx @mdvp/cli login` first.
+Remote submit requires an API key. Run `npx @mdvp/cli login` first. Use `--local` to crawl on this machine instead of using remote credits.
 
 ---
 
@@ -188,16 +211,6 @@ npx @mdvp/cli mcp
 ```
 
 Available MCP tools: `audit_url`, `perceive_url`, `compare_sites`, `top_sites`, `submit_for_crawl`
-
----
-
-### `md <domain>`
-
-Fetch a page and return its content as Markdown. Useful for feeding page copy into an agent alongside design analysis.
-
-```bash
-npx @mdvp/cli md stripe.com
-```
 
 ---
 
@@ -281,6 +294,10 @@ mcp.mjs              # MCP server (stdio)
 
 - Node.js 18+
 - Puppeteer (installed automatically, used for `--live` and `hire`)
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Security reports should follow [SECURITY.md](SECURITY.md), and roadmap context lives in [ROADMAP.md](ROADMAP.md).
 
 ---
 
