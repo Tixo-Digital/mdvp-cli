@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: write   # create GitHub Release
-  id-token: write   # npm provenance (OIDC)
+  id-token: write   # npm Trusted Publisher + provenance (OIDC, no NPM_TOKEN needed)
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -55,7 +55,9 @@ jobs:
             exit 1
           fi
 
-  # ── 3. Publish to npm ─────────────────────────────────────────────────────
+  # ── 3. Publish to npm (Trusted Publisher — no NPM_TOKEN secret required) ───
+  # One-time setup on npmjs.com → @mdvp/cli → Settings → Publishing → Trusted Publishers:
+  #   Org/user: Tixo-Digital  |  Repo: mdvp-cli  |  Workflow: release.yml
   publish:
     name: Publish to npm
     needs: [test, version-check]
@@ -67,15 +69,12 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish
+      - name: Publish (OIDC Trusted Publisher)
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   # ── 4. GitHub Release with auto-generated notes ───────────────────────────
   github-release:
