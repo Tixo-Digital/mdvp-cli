@@ -14,7 +14,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Design quality measurement for any live URL.** Runs locally via Puppeteer — no API key, no account, no baseline needed.
+**DOM analysis for any live URL.** Counts, ratios, and a pattern registry for the rendered HTML. Runs locally via Puppeteer — no API key, no account, no baseline needed.
 
 ```bash
 npx @mdvp/cli audit myapp.com
@@ -24,15 +24,15 @@ npx @mdvp/cli audit myapp.com
 
 ![MDVP scoring pipeline](docs/assets/algorithm-flow.gif)
 
-Puppeteer opens the URL → `getComputedStyle()` reads every element → 12 categories score into 4 components → signal registry flags AI-generated design patterns. See [How it works](#how-it-works) below for the full walkthrough.
+Puppeteer opens the URL → `getComputedStyle()` reads every element → 12 categories score into 4 components → a pattern registry highlights common design heuristics. See [How it works](#how-it-works) below for the full walkthrough.
 
 ---
 
 ## Why
 
-Tools like v0, Bolt, Lovable, and Cursor generate frontends fast — but the output has a fingerprint: Inter as the primary font, Tailwind's default purple-blue-pink gradient palette, every button is `border-radius: 9999px`, 40+ unique CSS colors with no system. Visual regression tools can't help (no prior snapshot to compare against); linters check syntax, not rendered quality.
+Tools like v0, Bolt, Lovable, and Cursor generate frontends fast — but the output often shares common patterns: Inter as the primary font, Tailwind's default purple-blue-pink gradient palette, every button is `border-radius: 9999px`, 40+ unique CSS colors with no system. Visual regression tools can't help (no prior snapshot to compare against); linters check syntax, not rendered quality.
 
-MDVP measures what matters. It instruments the live DOM, extracts computed CSS values via `getComputedStyle()`, runs perceptual color analysis in Oklab space, and scores against design-system heuristics. Fully deterministic: same DOM → same score, bit-identical.
+MDVP gives you numbers on the rendered DOM. It instruments the page, extracts computed CSS values via `getComputedStyle()`, runs perceptual color analysis in Oklab space, and counts against design-system heuristics. The scoring is deterministic: the same DOM produces the same score, bit-identical.
 
 ## Quickstart
 
@@ -67,12 +67,12 @@ entropy 0.82 · apca 94.2 · grid 61%
 Lowest: originality (38) · color (44) · spacing (51)
   · 32 unique colors. Professional limit: 8–12
   · 4 font families. Professional limit: 2
-  · Inter + Tailwind purple-blue palette — AI-generated design fingerprint
+  · Inter + Tailwind purple-blue palette — common design pattern
 ```
 
 ## How it works
 
-Puppeteer opens the URL, `getComputedStyle()` is read on every element, the scorer groups 12 categories into four named components, and a signal registry of independent AI-pattern detectors penalises the `originality` component. See [the methodology paper](docs/methodology.md) for the full algorithm, weight table, and prior-work comparison.
+Puppeteer opens the URL, `getComputedStyle()` is read on every element, the scorer groups 12 categories into four named components, and a pattern registry of independent heuristic detectors deducts from the `originality` component when common patterns match. See [the methodology paper](docs/methodology.md) for the full algorithm, weight table, and prior-work comparison.
 
 ## Documentation
 

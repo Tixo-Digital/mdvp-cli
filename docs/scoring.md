@@ -9,7 +9,7 @@ MDVP scores a live DOM across four components grouped from 12 underlying categor
 | `css_health` | Typography, spacing, color system, component consistency, raw counts | Absence of a design system shows up here first |
 | `visual_quality` | Modernity, polish, sophistication, readability (entropy, Oklab ΔE, APCA) | Perceptual — not "what the CSS says" but "what the eye sees" |
 | `structure` | HTML landmarks, heading hierarchy, alt coverage, content depth, UX patterns | Accessibility and information architecture |
-| `originality` | AI-generated design fingerprint (signal registry) | Caps overall score — a page that screams "v0 template" can't score above ~B |
+| `originality` | Pattern matching (heuristic detectors in a registry) | Caps overall score when several patterns match — useful for catching low-effort outputs, not a measure of design quality |
 
 A high `originality` penalty caps the overall score regardless of other categories. This is intentional: a 95% css_health page built with Inter + Tailwind's default purple-pink palette and 9999px border-radius is still a generic-looking page, and should be flagged.
 
@@ -38,7 +38,7 @@ Computed directly from `getComputedStyle()` on every visible element. No model, 
 
 HTML landmark usage, heading hierarchy, accessible alt text, content depth, UX patterns.
 
-### `originality` — AI-generated UI detection
+### `originality` — pattern matching (heuristic)
 
 A directory of independent detectors — [`engine/signals/`](../engine/signals/), one file per anti-pattern. The score starts at 100 and each matched signal subtracts a penalty:
 

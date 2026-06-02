@@ -52,7 +52,7 @@ entropy 0.82 · apca 94.2 · grid 61%
 Lowest: originality (38) · color (44) · spacing (51)
   · 32 unique colors. Professional limit: 8–12
   · 4 font families. Professional limit: 2
-  · Inter + Tailwind purple-blue palette — AI-generated design fingerprint
+  · Inter + Tailwind purple-blue palette — common design pattern
 ```
 
 JSON output adds a `source` field (`"local"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from.

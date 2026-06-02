@@ -120,7 +120,7 @@ The full list of tool parameters is in [`mcp.mjs`](../mcp.mjs).
 
 > **You:** how does our landing page score?
 >
-> **Agent** *(calls `audit_url` with `yourapp.com`)* — yourapp.com scored **B 71/100**. Lowest: originality (52) — Inter + Tailwind palette is the AI fingerprint. `css_health` 78, `structure` 84.
+> **Agent** *(calls `audit_url` with `yourapp.com`)* — yourapp.com scored **B 71/100**. Lowest: originality (52) — Inter + Tailwind palette matches a common design pattern. `css_health` 78, `structure` 84.
 
 The agent can chain `audit_url` → `perceive_url` to drill from a numeric grade into the full design perception (saliency map, motion taxonomy, recommendations).
 

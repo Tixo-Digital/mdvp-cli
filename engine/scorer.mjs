@@ -257,9 +257,9 @@ function scoreVibecodedPenalty(metrics, config = {}) {
   // Composite escalation: a page tripping many signals at once is a far
   // stronger fingerprint than any single one. Weight-0 signals (soft tells)
   // contribute to signalCount without penalising on their own.
-  if (signalCount >= 8) { score -= 20; details.push(`${signalCount} AI-pattern signals — extremely strong vibe-code fingerprint`) }
-  else if (signalCount >= 6) { score -= 12; details.push(`${signalCount} AI-pattern signals — strong vibe-code fingerprint`) }
-  else if (signalCount >= 4) { score -= 6; details.push(`${signalCount} AI-pattern signals`) }
+  if (signalCount >= 8) { score -= 20; details.push(`${signalCount} heuristic pattern matches — many common design patterns detected`) }
+  else if (signalCount >= 6) { score -= 12; details.push(`${signalCount} heuristic pattern matches — several common design patterns detected`) }
+  else if (signalCount >= 4) { score -= 6; details.push(`${signalCount} heuristic pattern matches`) }
 
   return {
     category: 'originality',
@@ -292,7 +292,7 @@ function scoreHTMLQuality(metrics) {
     const desc = metrics.metaDescription.toLowerCase()
     if (desc.length < 50) { score -= 5; details.push(`Meta description too short (${desc.length} chars). Aim for 120-160`) }
     const aiMeta = ['lovable generated', 'vite + react', 'built with lovable', 'made with bolt', 'v0 by vercel', 'cutting-edge', 'revolutionize', 'transform your business']
-    if (aiMeta.some(p => desc.includes(p))) { score -= 15; details.push('AI-generated meta description detected. Replace with real description') }
+    if (aiMeta.some(p => desc.includes(p))) { score -= 15; details.push('Generic auto-generated meta description detected. Consider a more specific description') }
   }
   if (metrics.titleTag) {
     const title = metrics.titleTag.toLowerCase()

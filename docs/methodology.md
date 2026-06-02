@@ -64,7 +64,7 @@ Earlier MDVP designs explored using a saliency model (GBVS, DeepGaze II) to pred
 
 The cloud `/perceive` endpoint (available in the hosted API tier) uses a vision model for annotated screenshot analysis. This is intentionally separate from the local scoring engine.
 
-### Pillar 4 — AI-pattern detection (vibe-code fingerprints)
+### Pillar 4 — pattern matching (heuristics)
 
 The `originality` category flags patterns associated with AI-generated UIs. Each signal is an independent detector living in its own file under [`engine/signals/`](../engine/signals/). The score starts at 100; every matched signal subtracts its penalty.
 
@@ -85,7 +85,7 @@ The `originality` category flags patterns associated with AI-generated UIs. Each
 | `emoji-icons` | −8 | Emoji standing in for an icon system |
 | `monochrome-no-accent` | −5 | Near-gray palette with no accent (soft signal, weight 0) |
 
-**Composite escalation.** A page tripping many signals at once is a far stronger fingerprint than any one alone. Beyond the per-signal penalties, the score takes an extra −6 / −12 / −20 as the matched-signal count crosses 4 / 6 / 8. Soft signals (weight 0) contribute to this count without penalising on their own.
+**Composite escalation.** A page tripping many signals at once is a stronger signal than any one alone. Beyond the per-signal penalties, the score takes an extra −6 / −12 / −20 as the matched-signal count crosses 4 / 6 / 8. Soft signals (weight 0) contribute to this count without penalising on their own.
 
 These signals are **heuristic and imperfect** — a human designer could intentionally use Inter with a tight color system. They are applied as a cap on the overall score rather than a hard disqualification (see weights below), so an otherwise excellent site that happens to use Inter is not penalised severely.
 

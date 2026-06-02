@@ -2,8 +2,8 @@
 
 Each file in this directory is **one anti-pattern detector**. A signal looks at the
 DOM metrics extracted by [`../extract.js`](../extract.js) and decides whether a page
-matches a known AI-generated / low-craft pattern (Inter as the only font, pill buttons,
-pulsing status dots, an "eyebrow" chip above the H1, etc.).
+matches a known low-craft pattern (Inter as the only font, pill buttons, pulsing
+status dots, an "eyebrow" chip above the H1, etc.).
 
 The `originality` score starts at 100 and every matched signal subtracts its penalty.
 
@@ -25,8 +25,8 @@ export default {
   penalty: 12,                    // points removed from originality (0–100)
   weight: 1,                      // contribution to the composite "how many signals" count
   rationale:
-    'Gratuitous pulse/ping animations on dots and badges are a hallmark of ' +
-    'AI-generated UIs and add motion noise without information.',
+    'Gratuitous pulse/ping animations on dots and badges often add motion ' +
+    'noise without information. Many low-craft sites ship these by default.',
 
   /**
    * @param {object} m   DOM metrics (see ../extract.js return value)
