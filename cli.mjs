@@ -10,7 +10,7 @@ import { apiGet, apiPost, pickModule, API } from './lib/http.mjs'
 import { loadConfig, saveConfig, CONFIG_DIR, CONFIG_FILE } from './lib/config.mjs'
 import { VERSION, CATS, R, WELCOME, HELP_OVERVIEW, HELP_TOPICS, HELP_TOPIC_BY_COMMAND } from './lib/constants.mjs'
 import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar, parseDomain, toTextFormat } from './lib/format.mjs'
-import { cmdAudit, cmdAuditLocal } from './commands/audit.mjs'
+import { cmdAudit } from './commands/audit.mjs'
 import { cmdCompare, cmdTop } from './commands/compare.mjs'
 import { cmdLogin, cmdBalance } from './commands/auth.mjs'
 import { cmdHire, cmdRecrawl, cmdSubmit } from './commands/hire.mjs'
@@ -28,7 +28,9 @@ async function main() {
     raw: flags.has("--raw"),
     text: flags.has("--text"),  // LLM-optimized compact format
     apiKey: cfg.apiKey ?? null,
-    local: flags.has("--local"),
+    local: flags.has("--local"),  // deprecated: now the default; kept for backward compat
+    cloud: flags.has("--cloud"),  // explicit cloud dataset lookup (was default before v1.32.0)
+    swarm: flags.has("--swarm"),  // local audit + contribute to public dataset
     check: flags.has("--check"),  // threshold enforcement — exit 1 on violation
     design: flagValues.design || null,  // DESIGN.md path (default: auto-discover in cwd)
     daemon: flags.has("--daemon") || flags.has("-d"),
