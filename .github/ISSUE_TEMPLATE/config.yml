@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Tixo-Digital/mdvp-cli/security/advisories/new
+    about: Please report security issues via GitHub Security Advisories, not public issues.
+  - name: Question / discussion
+    url: https://github.com/Tixo-Digital/mdvp-cli/discussions
+    about: General questions about scoring methodology, usage, or integration.

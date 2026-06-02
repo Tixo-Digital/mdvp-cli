@@ -1,0 +1,144 @@
+name: MDVP Design Quality Check
+description: >
+  Audit a URL for design quality — CSS health, visual quality, and structure
+  scores — using the bundled local engine. No API key required.
+  Fails the workflow if scores fall below configured thresholds.
+
+author: Tixo Digital
+
+branding:
+  icon: eye
+  color: gray-dark
+
+inputs:
+  url:
+    description: URL to audit (e.g. https://preview.myapp.com)
+    required: true
+
+  working_directory:
+    description: Directory to look for .mdvprc threshold config (default: repo root)
+    required: false
+    default: ${{ github.workspace }}
+
+  fail_on_violation:
+    description: Exit 1 if any threshold is violated (default true)
+    required: false
+    default: 'true'
+
+  # Inline threshold overrides (override .mdvprc if provided)
+  max_colors:
+    description: Max unique CSS colors (default 30)
+    required: false
+  max_font_families:
+    description: Max unique font families (default 3)
+    required: false
+  max_font_sizes:
+    description: Max unique font sizes (default 8)
+    required: false
+  min_spacing_grid_pct:
+    description: Min % of spacing values on 4px grid (default 60)
+    required: false
+  min_css_health:
+    description: Min css_health component score 0–100 (default 60)
+    required: false
+  min_overall:
+    description: Min overall design score 0–100 (default 40)
+    required: false
+
+outputs:
+  overall_score:
+    description: Overall design score (0–100)
+  grade:
+    description: Letter grade (A+, A, B+, etc.)
+  css_health_score:
+    description: CSS health component score
+  violations:
+    description: JSON array of threshold violations (empty array if pass)
+  report_json:
+    description: Full JSON audit report
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Write threshold config (inline overrides)
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        node -e "
+          const existing = (() => { try { return JSON.parse(require('fs').readFileSync('.mdvprc','utf-8')); } catch { return {}; } })();
+          const t = existing.thresholds ?? existing ?? {};
+          const overrides = {
+            ${{ inputs.max_colors != '' && format('max_colors: {0},', inputs.max_colors) || '' }}
+            ${{ inputs.max_font_families != '' && format('max_font_families: {0},', inputs.max_font_families) || '' }}
+            ${{ inputs.max_font_sizes != '' && format('max_font_sizes: {0},', inputs.max_font_sizes) || '' }}
+            ${{ inputs.min_spacing_grid_pct != '' && format('min_spacing_grid_pct: {0},', inputs.min_spacing_grid_pct) || '' }}
+            ${{ inputs.min_css_health != '' && format('min_css_health: {0},', inputs.min_css_health) || '' }}
+            ${{ inputs.min_overall != '' && format('min_overall: {0},', inputs.min_overall) || '' }}
+          };
+          const merged = { thresholds: { ...t, ...Object.fromEntries(Object.entries(overrides).filter(([,v]) => v !== undefined)) } };
+          require('fs').writeFileSync('.mdvprc', JSON.stringify(merged, null, 2));
+        " 2>/dev/null || true
+
+    - name: Run MDVP audit
+      id: audit
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        set -e
+        RESULT=$(npx --yes @mdvp/cli@latest audit "${{ inputs.url }}" --local --check --json 2>/tmp/mdvp-stderr.txt || true)
+        EXIT_CODE=$?
+
+        echo "overall_score=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String(d.overall_score??''))")" >> $GITHUB_OUTPUT
+        echo "grade=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(d.grade??'')")" >> $GITHUB_OUTPUT
+        echo "css_health_score=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String(d.components?.css_health?.score??''))")" >> $GITHUB_OUTPUT
+        echo "violations=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(JSON.stringify(d.violations??[]))")" >> $GITHUB_OUTPUT
+
+        # Write report to a temp file for the output (multiline safe)
+        echo "$RESULT" > /tmp/mdvp-report.json
+        echo "report_json<<EOF" >> $GITHUB_OUTPUT
+        cat /tmp/mdvp-report.json >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+        # Print summary to workflow log
+        echo "::group::MDVP Design Quality Report"
+        cat /tmp/mdvp-report.json | node -e "
+          const d = JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8'));
+          console.log('Overall: ' + d.overall_score + '/100 (' + d.grade + ')');
+          if (d.components) {
+            const c = d.components;
+            console.log('  css_health:     ' + c.css_health?.score + '  (' + c.css_health?.unique_colors + ' colors, ' + c.css_health?.unique_font_families + ' fonts, ' + c.css_health?.spacing_on_grid_pct + '% on grid)');
+            console.log('  visual_quality: ' + c.visual_quality?.score);
+            console.log('  structure:      ' + c.structure?.score);
+            console.log('  originality:    ' + c.originality?.score);
+          }
+          if (d.violations?.length) {
+            console.log('\nThreshold violations:');
+            d.violations.forEach(v => console.log('  ✗ ' + v.msg));
+          } else if (d.violations) {
+            console.log('\n✓ All thresholds pass');
+          }
+          if (d.recommendations?.length) {
+            console.log('\nRecommendations:');
+            d.recommendations.forEach(r => console.log('  · ' + r));
+          }
+        " 2>/dev/null || cat /tmp/mdvp-report.json
+        echo "::endgroup::"
+
+        # Print stderr (Puppeteer progress)
+        if [ -s /tmp/mdvp-stderr.txt ]; then
+          echo "::group::MDVP Crawler Output"
+          cat /tmp/mdvp-stderr.txt
+          echo "::endgroup::"
+        fi
+
+        VIOLATIONS=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String((d.violations??[]).length))" 2>/dev/null || echo "0")
+
+        if [ "${{ inputs.fail_on_violation }}" = "true" ] && [ "$VIOLATIONS" -gt 0 ]; then
+          echo "::error::MDVP found $VIOLATIONS design quality violation(s). See report above."
+          exit 1
+        fi

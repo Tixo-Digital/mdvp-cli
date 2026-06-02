@@ -1,0 +1,66 @@
+name: Bug report
+description: Something broken in the CLI or scoring engine
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please fill in as much as possible.
+
+  - type: input
+    id: version
+    attributes:
+      label: "@mdvp/cli version"
+      placeholder: "1.31.3 — run: npx @mdvp/cli --version"
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: "20.11.0 — run: node --version"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - --local (offline Puppeteer)
+        - cloud (no --local flag)
+        - GitHub Action
+        - MCP server
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Command run
+      render: bash
+      placeholder: "npx @mdvp/cli audit myapp.com --local --check"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour / error output
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "macOS 14, Ubuntu 22.04, Windows 11..."

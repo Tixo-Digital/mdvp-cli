@@ -1,0 +1,35 @@
+name: Scoring feedback
+description: Score seems wrong, threshold too strict/loose, or heuristic miscalibrated
+labels: [scoring]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Scoring feedback is very valuable. The heuristics are calibrated on ~200 sites and likely have gaps.
+
+  - type: input
+    id: url
+    attributes:
+      label: URL (or domain)
+      placeholder: "myapp.com"
+
+  - type: input
+    id: score
+    attributes:
+      label: Score you got
+      placeholder: "css_health: 38, overall: 52"
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What seems wrong
+      description: "e.g. 'css_health flagged 8 font sizes but it's a deliberate type scale', 'originality penalised Inter but this is a human-designed site'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: json
+    attributes:
+      label: JSON output (optional)
+      description: "Paste output of: npx @mdvp/cli audit <domain> --local --json"
+      render: json
