@@ -2,6 +2,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { VERSION } from "./lib/constants.mjs";
 import https from "https";
 import { readFile } from "fs/promises";
 import { homedir } from "os";
@@ -45,7 +46,7 @@ function domainFrom(url) {
 }
 
 const server = new Server(
-  { name: "mdvp", version: "1.0.0" },
+  { name: "mdvp", version: VERSION },
   { capabilities: { tools: {} } }
 );
 
