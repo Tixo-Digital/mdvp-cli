@@ -17,7 +17,7 @@
 **Design quality measurement for any live URL.** Runs locally via Puppeteer — no API key, no account, no baseline needed.
 
 ```bash
-npx @mdvp/cli audit myapp.com --local
+npx @mdvp/cli audit myapp.com
 ```
 
 ---
@@ -32,13 +32,19 @@ MDVP measures what matters. It instruments the live DOM, extracts computed CSS v
 
 ```bash
 # Score any URL locally (first run downloads Puppeteer's Chromium, ~30s)
-npx @mdvp/cli audit myapp.com --local
+npx @mdvp/cli audit myapp.com
 
 # Enforce thresholds in CI — exits 1 on violation
-npx @mdvp/cli audit myapp.com --local --check
+npx @mdvp/cli audit myapp.com --check
+
+# Look up a known site from the public dataset (no local crawl)
+npx @mdvp/cli audit myapp.com --cloud
+
+# Contribute your local result to the public dataset
+npx @mdvp/cli audit myapp.com --swarm
 
 # JSON output for scripting
-npx @mdvp/cli audit myapp.com --local --json | jq .components.css_health
+npx @mdvp/cli audit myapp.com --json | jq .components.css_health
 ```
 
 **Output:**

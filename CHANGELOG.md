@@ -7,6 +7,44 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.32.0] — 2026-06-02
+
+### Changed
+
+- **BREAKING**: `audit <domain>` now crawls locally by default (no API key, no credits). The previous default was a cloud dataset lookup.
+  - Migration: pass `--cloud` to restore the old cloud-lookup behavior.
+  - CI scripts that ran `audit <url> --local` keep working — `--local` is now a deprecated alias for the default.
+- Release workflow now uses Node 22 + `npm@latest` (npm 11+ is required for OIDC Trusted Publishing; Node 20 ships npm 10 which does not support it).
+- `lib/format.mjs` now defines `CATS` (was in `lib/constants.mjs`) to break a circular import that surfaced once `commands/audit.mjs` was loaded before `lib/constants.mjs` (e.g. from tests).
+
+### Added
+
+- **`--swarm` flag** — local audit + POST the result to the public dataset (`POST /swarm/contribute`). Opt-in per audit, not the default. Use it when you want your local audit to be a one-shot contribution. For persistent contribution, `mdvp hire` is still the right command.
+- **`--cloud` flag** — explicit cloud dataset lookup. This is what `audit` did by default before v1.32.0.
+- **`source` field in JSON output** — every audit result now reports `"local"`, `"cloud"`, or `"swarm"` so consumers can tell where the data came from.
+- **Conflict detection** — `--cloud` and `--swarm` are mutually exclusive; `--cloud` and `--check` are mutually exclusive (--check requires a local crawl); `--local` with `--cloud` or `--swarm` is a hard error (since v1.32.0 `--local` is the default and the combination is meaningless).
+- 18 new unit tests for the conflict matrix, source label, and audit flag routing.
+
+### Notes
+
+- Version bump is minor (1.31.x → 1.32.0) despite the default-behavior change. Reasoning: the change is reversible by adding one flag (`--cloud`), there is no schema or wire-format break, and `1.32.0` is less disruptive for downstream pin files than `2.0.0`. The CHANGELOG and migration guide are explicit so the break is documented.
+- The `submit` command no longer accepts `--local`; the equivalent is now `audit <domain> --swarm`. `submit` is reserved for the credit-spending remote crawl.
+- npm unpublish of the v1.32.0-rc.0 test publish is queued (publishing under `--tag=next` kept `latest` at 1.31.5 throughout the test).
+
+---
+
+## [1.31.5] — 2026-06-02
+
+### Fixed
+
+- OIDC Trusted Publishing release workflow now actually publishes (was failing in CI on every prior tag push). The fix required Node 22 + `npm@latest` since npm 10 (shipped with Node 20) does not support OIDC token exchange. Manual `npm publish` for 1.31.5 was used as a stopgap.
+
+## [1.31.4] — 2026-06-02
+
+### Fixed
+
+- `release.yml` switched to npm Trusted Publisher (OIDC) — required removing `NPM_TOKEN` secret from repo settings and configuring the publisher on npmjs.com. First run still failed; root cause was `setup-node` injecting `NODE_AUTH_TOKEN` into `.npmrc` and overriding the OIDC exchange. Fix landed in 1.31.5.
+
 ## [1.31.3] — 2026-06-02
 
 ### Added

@@ -1,28 +1,39 @@
 # CLI commands
 
-Every command in `@mdvp/cli` v1.31+. All cloud commands (`audit`, `compare`, `top`, `worst`, `perceive`, `submit`, `recrawl`) read the API key from `MDVP_API_KEY` env var or `~/.mdvp/config.json`; offline commands (`--local`) need no key.
+Every command in `@mdvp/cli` v1.32+. `audit` now crawls locally by default (no API key, no credits) and reads the API key from `MDVP_API_KEY` env var or `~/.mdvp/config.json` only when you pass `--cloud`. `submit`, `compare`, `top`, `worst`, `perceive`, and `recrawl` always read the key.
 
 ## Audit
 
 Score a single URL.
 
 ```bash
-# Offline — runs Puppeteer locally, no network except the target URL
-npx @mdvp/cli audit myapp.com --local
-
-# Cloud — instant lookup from the public dataset (needs API key, no Puppeteer)
+# Default since v1.32.0 — local Puppeteer crawl, no API key, no credits
 npx @mdvp/cli audit myapp.com
+
+# Cloud — instant lookup from the public dataset (--json/--raw costs 1 credit)
+npx @mdvp/cli audit myapp.com --cloud
+
+# Swarm — local audit, then contribute the result to the public dataset
+npx @mdvp/cli audit myapp.com --swarm
+
+# CI — local audit + enforce .mdvprc thresholds, exit 1 on violation
+npx @mdvp/cli audit myapp.com --check
 ```
 
 Flags:
 
 | Flag | What it does |
 |---|---|
-| `--local` | Run Puppeteer locally instead of querying the dataset |
-| `--check` | Enforce `.mdvprc` thresholds and DESIGN.md spec, exit 1 on violation |
+| _(none)_ | Local Puppeteer crawl. Default since v1.32.0. |
+| `--cloud` | Look up an existing dataset record. `--json`/`--raw` cost 1 credit. |
+| `--swarm` | Local audit + POST the result to the public dataset. |
+| `--check` | Enforce `.mdvprc` thresholds and DESIGN.md spec, exit 1 on violation. Local-only (cannot combine with `--cloud`). |
+| `--local` | Deprecated alias for the default. Kept so older CI scripts keep working. |
 | `--json` | Emit machine-readable JSON |
+| `--raw` | Full dataset row including assets URLs (cloud only) |
+| `--text` | LLM-optimized compact format |
 | `--design=PATH` | Diff against a specific DESIGN.md file |
-| `--timeout=MS` | Navigation timeout for `--local` (default 60000) |
+| `--timeout=MS` | Navigation timeout for local crawl (default 60000) |
 | `--no-vision` | Skip VLM analysis on the cloud `perceive` command |
 | `--no-header` | Suppress the ASCII banner in CLI output |
 | `--mdvprc=PATH` | Path to a non-default config file |
@@ -43,6 +54,8 @@ Lowest: originality (38) · color (44) · spacing (51)
   · 4 font families. Professional limit: 2
   · Inter + Tailwind purple-blue palette — AI-generated design fingerprint
 ```
+
+JSON output adds a `source` field (`"local"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from.
 
 ## Compare
 
@@ -82,11 +95,11 @@ npx @mdvp/cli submit mysite.com         # add to dataset
 npx @mdvp/cli recrawl figma.com         # re-score an existing site
 ```
 
-`--local` submits the locally-crawled result without using a remote crawl slot.
+`--local` flag is gone from `submit` in v1.32.0 — `audit --swarm` is the per-audit contribution path; `submit` is the full credit-spending remote crawl.
 
 ## Hire
 
-Become a crawler node — contributes compute to the public dataset. No API key required.
+Become a persistent crawler node — contributes compute to the public dataset. No API key required.
 
 ```bash
 npx @mdvp/cli hire               # interactive, 2 parallel tabs
@@ -94,7 +107,7 @@ npx @mdvp/cli hire --tabs=4      # more throughput
 npx @mdvp/cli hire --daemon      # background process
 ```
 
-The `hire` command copies `engine/crawler-worker.mjs` (from this package) into `~/.mdvp/crawler/` and runs it. The same source file also runs when you do `audit --local`.
+The `hire` command copies `engine/crawler-worker.mjs` (from this package) into `~/.mdvp/crawler/` and runs it. The same source file also runs when you do `audit` (the local default) or `audit --swarm`.
 
 ## MCP
 
@@ -114,7 +127,7 @@ npx @mdvp/cli login
 # → prompts for key, saves to ~/.mdvp/config.json
 ```
 
-The key is used for cloud commands and `submit`. The local `--local` mode never touches the network for anything except the target URL itself.
+The key is used for cloud commands and `submit`. The local mode (default `audit`) never touches the network for anything except the target URL itself. `--swarm` is the only flag that POSTs back to the MDVP API from local mode.
 
 ## Config
 

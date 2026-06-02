@@ -79,9 +79,11 @@ Equivalent to passing `--design=docs/DESIGN.md` on the CLI.
 ## Running the gate
 
 ```bash
-npx @mdvp/cli audit myapp.com --local --check
+npx @mdvp/cli audit myapp.com --check
 # exits 0 on pass, exits 1 with violation list on fail
 ```
+
+(`--local` is no longer needed in v1.32.0 — `audit` crawls locally by default. Kept as a deprecated alias so older scripts keep working.)
 
 ### Example failure
 
@@ -113,8 +115,8 @@ The CLI is a single static binary contract: `exit 0 = pass`, `exit 1 = fail`, `-
 
 | System | How |
 |---|---|
-| GitLab CI | `npx @mdvp/cli audit $URL --local --check` in a job |
-| CircleCI | `run: npx @mdvp/cli audit $URL --local --check` |
+| GitLab CI | `npx @mdvp/cli audit $URL --check` in a job |
+| CircleCI | `run: npx @mdvp/cli audit $URL --check` |
 | Buildkite | Same — single command |
 | Vercel | Use the GitHub Action in the deploy workflow |
 | Netlify | Use the Netlify build plugin or run via `npx` in `postBuild` |
@@ -125,7 +127,7 @@ Run MDVP on staged changes (against a local preview) before they reach CI:
 
 ```bash
 # .husky/pre-commit
-npx @mdvp/cli audit $PREVIEW_URL --local --check
+npx @mdvp/cli audit $PREVIEW_URL --check
 ```
 
 ## Next
