@@ -88,26 +88,55 @@ async function cmdAuditLocal(domain, opts) {
   }
 
   // Score locally — no cloud call needed
-  const { scoreDOMMetrics } = await import(`${ENGINE_DIR}/scorer.mjs`)
+  const { scoreDOMMetrics, groupComponents, computeEntropyMetrics } = await import(`${ENGINE_DIR}/scorer.mjs`)
   const score = scoreDOMMetrics(result.metrics)
   const bd = score.breakdown.map((b) => ({ c: b.category, s: b.score }))
   const sorted = [...bd].sort((a, b) => a.s - b.s)
+  const components = groupComponents(score.breakdown, result.metrics)
+  const entropy = computeEntropyMetrics(result.metrics)
 
   const site = { id: domain, url: `https://${domain}`, overall_score: score.overall, grade: score.grade, label: null, scores: { breakdown: bd } }
 
   if (json) {
-    console.log(JSON.stringify({ id: site.id, url: site.url, grade: score.grade, overall_score: score.overall, scores: { overall: score.overall, grade: score.grade, breakdown: Object.fromEntries(bd.map((b) => [b.c, b.s])), worst: sorted.slice(0, 3).map((b) => ({ key: b.c, score: b.s })) } }, null, 2))
+    console.log(JSON.stringify({
+      id: site.id,
+      url: site.url,
+      grade: score.grade,
+      overall_score: score.overall,
+      components,
+      entropy: {
+        overall: entropy.overallDesignEntropy,
+        typography: entropy.typographyEntropy,
+        color: entropy.colorEntropy,
+        spacing: entropy.spacingEntropy,
+        apca_risk: entropy.apcaContrastRisk,
+        spacing_grid_pct: Math.round(entropy.spacingGridAdherence * 100),
+      },
+      scores: {
+        overall: score.overall,
+        grade: score.grade,
+        breakdown: Object.fromEntries(bd.map((b) => [b.c, b.s])),
+        worst: sorted.slice(0, 3).map((b) => ({ key: b.c, score: b.s })),
+      },
+      recommendations: score.recommendations,
+    }, null, 2))
     return
   }
 
   if (text) { console.log(toTextFormat(site, bd)); return }
 
   console.log(`\n${BOLD}${domain}${R}  ${scoreColor(score.overall)}${score.grade}  ${score.overall}/100${R}  ${DIM}local crawl${R}\n`)
-  for (const cat of Object.keys(CATS)) {
-    const s = bd.find((b) => b.c === cat)?.s ?? 0
-    console.log(`  ${CATS[cat].padEnd(16)}  ${scoreColor(s)}${bar(s)}${R}  ${s}`)
-  }
+  console.log(`  ${DIM}css_health${R.padEnd ? '' : ''}       ${scoreColor(components.css_health.score)}${bar(components.css_health.score)}${R}  ${components.css_health.score}  ${DIM}(${components.css_health.unique_colors} colors · ${components.css_health.unique_font_families} fonts · ${components.css_health.spacing_on_grid_pct}% on grid)${R}`)
+  console.log(`  ${'visual_quality'.padEnd(16)}  ${scoreColor(components.visual_quality.score)}${bar(components.visual_quality.score)}${R}  ${components.visual_quality.score}`)
+  console.log(`  ${'structure'.padEnd(16)}  ${scoreColor(components.structure.score)}${bar(components.structure.score)}${R}  ${components.structure.score}`)
+  console.log(`  ${'originality'.padEnd(16)}  ${scoreColor(components.originality.score)}${bar(components.originality.score)}${R}  ${components.originality.score}`)
+  console.log(`\n${DIM}entropy ${entropy.overallDesignEntropy} · apca ${entropy.apcaContrastRisk}${R}`)
   console.log(`\n${DIM}Lowest: ${sorted.slice(0, 3).map((i) => `${CATS[i.c] ?? i.c} (${i.s})`).join(" · ")}${R}\n`)
+  if (score.recommendations.length > 0) {
+    console.log(`${DIM}Recommendations:${R}`)
+    score.recommendations.slice(0, 3).forEach(r => console.log(`  ${DIM}· ${r}${R}`))
+    console.log()
+  }
 }
 
 async function cmdAudit(domain, opts) {

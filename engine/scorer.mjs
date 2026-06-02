@@ -498,6 +498,58 @@ export function computeEntropyMetrics(m) {
   }
 }
 
+// ── Component grouping for CI thresholds ─────────────────────────────────────
+
+/**
+ * Groups raw breakdown scores into three named components:
+ *   css_health       — Typography + Spacing + Color + Components
+ *                      (CSS/DOM measurables, no subjective judgment)
+ *   visual_quality   — Modernity + Visual Polish + Sophistication + Readability
+ *                      (design craft signals)
+ *   structure        — HTML Quality + UX Patterns + Content Depth
+ *                      (semantic/accessibility/content)
+ *
+ * Returned alongside the raw breakdown so callers can choose either level.
+ */
+export function groupComponents(breakdown, metrics) {
+  const get = (cat) => breakdown.find(b => b.category === cat)?.score ?? 0
+
+  const cssHealth = Math.round(
+    (get('typography') * 0.3 + get('spacing') * 0.3 + get('color') * 0.3 + get('components') * 0.1)
+  )
+  const visualQuality = Math.round(
+    (get('modernity') * 0.25 + get('visual_polish') * 0.35 + get('sophistication') * 0.25 + get('readability') * 0.15)
+  )
+  const structure = Math.round(
+    (get('html_quality') * 0.4 + get('ux_patterns') * 0.35 + get('contentDepth') * 0.25)
+  )
+
+  // Raw DOM counts for threshold enforcement
+  const rawCounts = {
+    unique_colors: (metrics.colors ?? []).length,
+    unique_font_families: (metrics.fontFamilies ?? []).length,
+    unique_font_sizes: (metrics.fontSizes ?? []).length,
+    unique_border_radii: (metrics.borderRadii ?? []).length,
+    total_elements: metrics.totalElements ?? 0,
+    dom_depth_proxy: metrics.totalElements ? Math.round(Math.log2(metrics.totalElements + 1)) : 0,
+    custom_properties: metrics.customProperties ?? 0,
+    has_dark_mode: !!metrics.hasDarkMode,
+    spacing_on_grid_pct: (() => {
+      const all = [...(metrics.paddings ?? []), ...(metrics.gaps ?? [])]
+      const px = all.map(([v]) => parseFloat(v)).filter(v => !isNaN(v) && v > 0)
+      if (px.length === 0) return 100
+      return Math.round(px.filter(v => v % 4 === 0).length / px.length * 100)
+    })(),
+  }
+
+  return {
+    css_health: { score: cssHealth, ...rawCounts },
+    visual_quality: { score: visualQuality },
+    structure: { score: structure },
+    originality: { score: get('originality') },
+  }
+}
+
 // ── Main scoring entry point ──────────────────────────────────────────────────
 
 export function scoreDOMMetrics(metrics) {
