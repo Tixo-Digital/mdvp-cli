@@ -20,6 +20,12 @@
 npx @mdvp/cli audit myapp.com
 ```
 
+### Pipeline
+
+![MDVP scoring pipeline](docs/assets/algorithm-flow.gif)
+
+Puppeteer opens the URL → `getComputedStyle()` reads every element → 12 categories score into 4 components → signal registry flags AI-generated design patterns. See [How it works](#how-it-works) below for the full walkthrough.
+
 ---
 
 ## Why
