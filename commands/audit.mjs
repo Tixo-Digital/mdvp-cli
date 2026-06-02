@@ -1,32 +1,37 @@
-import { apiGet, apiPost, pickModule, API } from '../lib/http.mjs'
+import { apiGet, apiPost, API } from '../lib/http.mjs'
 import { loadConfig } from '../lib/config.mjs'
-import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar, parseDomain, toTextFormat } from '../lib/format.mjs'
+import { DIM, BOLD, RED, scoreColor, bar, parseDomain, toTextFormat } from '../lib/format.mjs'
 import { R } from '../lib/constants.mjs'
 import { CATS } from '../lib/constants.mjs'
-import { spawn } from 'child_process'
-import { existsSync, writeFileSync, mkdirSync } from 'fs'
 import { homedir } from 'os'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __dir = dirname(fileURLToPath(import.meta.url))
+// Bundled engine — lives at engine/ relative to the CLI root (one level up from commands/)
+const ENGINE_DIR = join(__dir, '..', 'engine')
+const CRAWLER_WORKER = join(ENGINE_DIR, 'crawler-worker.mjs')
+const EXTRACT_JS = join(ENGINE_DIR, 'extract.js')
 
 async function cmdAuditLocal(domain, opts) {
   const { json, raw, text } = opts
   const { spawn } = await import("child_process")
-  const { existsSync } = await import("fs")
+  const { existsSync, writeFileSync, mkdirSync } = await import("fs")
   const dir = `${homedir()}/.mdvp/crawler`
 
+  // Use bundled engine files — no cloud download needed
   if (!existsSync(`${dir}/crawler-worker.mjs`)) {
-    process.stderr.write(`${DIM}downloading crawler...${R}\n`)
     mkdirSync(dir, { recursive: true })
-    const download = (url, dest) => new Promise((res, rej) => {
-      const { get: g } = pickModule(url)
-      g(url, { headers: { Accept: "text/plain" } }, (r) => {
-        let body = ""
-        r.on("data", (c) => (body += c))
-        r.on("end", () => { try { writeFileSync(dest, body); res() } catch { rej(new Error("write failed")) } })
-      }).on("error", rej)
-    })
-    await download(`${API}/crawler-worker.mjs`, `${dir}/crawler-worker.mjs`).catch(() => {})
-    await download(`${API}/extract.js`, `${dir}/extract.js`).catch(() => {})
+    // Symlink or copy bundled files into the puppeteer working dir
+    const { copyFileSync } = await import("fs")
+    copyFileSync(CRAWLER_WORKER, `${dir}/crawler-worker.mjs`)
+    copyFileSync(EXTRACT_JS, `${dir}/extract.js`)
     writeFileSync(`${dir}/package.json`, '{"type":"module","dependencies":{"puppeteer":"*"}}')
+  } else {
+    // Keep bundled files in sync with installed package version
+    const { copyFileSync } = await import("fs")
+    copyFileSync(CRAWLER_WORKER, `${dir}/crawler-worker.mjs`)
+    copyFileSync(EXTRACT_JS, `${dir}/extract.js`)
   }
 
   if (!existsSync(`${dir}/node_modules/puppeteer`)) {
@@ -56,21 +61,22 @@ async function cmdAuditLocal(domain, opts) {
 
   process.stderr.write(`${DIM}crawling https://${domain} locally...${R}\n`)
 
+  const { spawn: spawnChild } = await import("child_process")
   const result = await new Promise((resolve, reject) => {
     const env = {
       ...process.env,
       CRAWL_ONCE: `https://${domain}`,
       CRAWL_ONCE_STDOUT: "1",
       TABS: "1",
-      API_URL: API,
+      // No API_URL needed — local scoring is done in-process after crawl
       ...(chromiumPath ? { PUPPETEER_EXECUTABLE_PATH: chromiumPath } : {}),
     }
-    const child = spawn("node", [`${dir}/crawler-worker.mjs`], { env, cwd: dir, stdio: ["ignore", "pipe", "pipe"] })
+    const child = spawnChild("node", [`${dir}/crawler-worker.mjs`], { env, cwd: dir, stdio: ["ignore", "pipe", "pipe"] })
     let out = ""
     let errOut = ""
     child.stdout.on("data", (d) => (out += d))
     child.stderr.on("data", (d) => { errOut += d; process.stderr.write(d) })
-    child.on("exit", (code) => {
+    child.on("exit", () => {
       try { resolve(JSON.parse(out)) }
       catch { reject(new Error(errOut.slice(-300) || "crawler returned no data")) }
     })
@@ -81,13 +87,9 @@ async function cmdAuditLocal(domain, opts) {
     process.exit(1)
   }
 
-  const scoreRes = await apiPost("/features", result.metrics, null).catch(() => null)
-  if (!scoreRes || !scoreRes.score) {
-    console.error(`${RED}Scoring failed${R}`)
-    process.exit(1)
-  }
-
-  const { score } = scoreRes
+  // Score locally — no cloud call needed
+  const { scoreDOMMetrics } = await import(`${ENGINE_DIR}/scorer.mjs`)
+  const score = scoreDOMMetrics(result.metrics)
   const bd = score.breakdown.map((b) => ({ c: b.category, s: b.score }))
   const sorted = [...bd].sort((a, b) => a.s - b.s)
 
