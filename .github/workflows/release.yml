@@ -81,7 +81,13 @@ jobs:
         run: npm config set registry https://registry.npmjs.org/
 
       - name: Publish (OIDC Trusted Publisher)
-        run: npm publish --provenance --access public
+        run: |
+          if [[ "${{ github.ref_name }}" == *-* ]]; then
+            echo "Pre-release detected, using --tag=next so it does not replace latest"
+            npm publish --provenance --access public --tag=next
+          else
+            npm publish --provenance --access public
+          fi
 
   # ── 4. GitHub Release with auto-generated notes ───────────────────────────
   github-release:
