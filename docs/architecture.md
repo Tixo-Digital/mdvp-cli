@@ -1,6 +1,6 @@
 # System Architecture
 
-MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler**, a **coordinator** (server), and **storage**. The client, engine, and crawler are in this repository. The coordinator and storage run on Cloudflare and are not open source — but the protocol between them is documented below, so the engine and crawler are fully usable on their own (`--local`) or against a self-hosted coordinator.
+MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler**, a **coordinator** (server), and **storage**. The client, engine, and crawler are in this repository. The coordinator and storage are hosted at `api.mdvp.dev` and are not part of this open-source package — but the protocol between them is documented below, so the engine and crawler are fully usable on their own (`--local`) or against a self-hosted coordinator.
 
 ---
 
@@ -8,7 +8,7 @@ MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler*
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  This repository (open source)                               │
+│  This repository (open source, MIT)                          │
 │                                                              │
 │  CLIENT: @mdvp/cli (npm)          ENGINE: engine/            │
 │  ┌──────────────────┐             ┌──────────────────────┐   │
@@ -23,13 +23,12 @@ MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler*
                         │ HTTP (documented protocol)
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  COORDINATOR + STORAGE: api.mdvp.dev (Cloudflare, not OSS)    │
+│  COORDINATOR + STORAGE: hosted service (not in this repo)    │
 │                                                              │
 │  Coordinator   /crawl/claim · /crawl/complete · /crawl/submit│
-│  Storage       D1 (sites, crawl_queue) · R2 (screenshots…)   │
-│  /perceive     VLM analysis (hosted, API-key gated)          │
-│  /mcp          MCP server                                    │
-│  /billing      Stripe (not open source)                      │
+│  Storage       dataset + queued jobs + screenshots           │
+│  /perceive     VLM analysis (hosted)                         │
+│  /mcp          MCP server (Streamable HTTP transport)        │
 └─────────────────────────────────────────────────────────────┘
                         ▲
    SWARM: N contributor crawler nodes, each pulling from the
@@ -92,7 +91,7 @@ they intentionally violate, or raise the penalty on one they want banned:
 
 The public MDVP dataset is built by contributor-run crawler nodes. Any machine with Node.js 18+ and internet access can become a node.
 
-> **Swarm, not peer-to-peer.** Nodes do not talk to each other. There is no peer discovery, gossip, or DHT. Every node independently pulls work from a central coordinator (`api.mdvp.dev`) backed by a Cloudflare D1 queue, crawls it, and reports back. This is the classic worker-pool / pull-queue pattern (think Sidekiq or Celery workers), which keeps deduplication, prioritisation, and abuse-prevention in one place. True P2P would add a lot of machinery for little benefit here — a crawler still needs consensus on who crawls what.
+> **Swarm, not peer-to-peer.** Nodes do not talk to each other. There is no peer discovery, gossip, or DHT. Every node independently pulls work from a central coordinator backed by a hosted queue, crawls it, and reports back. This is the classic worker-pool / pull-queue pattern (think Sidekiq or Celery workers), which keeps deduplication, prioritisation, and abuse-prevention in one place. True P2P would add a lot of machinery for little benefit here — a crawler still needs consensus on who crawls what.
 
 ### Starting a node
 
@@ -154,7 +153,7 @@ Each crawl extracts:
 - Network requests (first 80)
 - Raw HTML
 
-All data is stored privately at `api.mdvp.dev`. Contributor nodes receive no payment or data in return — they contribute compute to the shared dataset.
+Crawler nodes contribute compute to the shared dataset.
 
 ---
 
@@ -176,13 +175,13 @@ Content-Type: application/json
 { "domain": "mysite.com", "url": "https://mysite.com" }
 ```
 
-Costs $0.20 of credits (deducted from API token balance). Results appear in the dataset within ~60 seconds, once a crawler node picks up the job.
+Results appear in the dataset within ~60 seconds, once a crawler node picks up the job.
 
 ---
 
 ## Hosted API endpoints (api.mdvp.dev)
 
-These are used by the CLI cloud commands. All require `X-API-Key`.
+These are used by the CLI cloud commands. All require `X-API-Key` except the crawler-node endpoints.
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -200,20 +199,24 @@ These are used by the CLI cloud commands. All require `X-API-Key`.
 
 ## What is not open source
 
-- **Billing** — Stripe integration, credit transactions, token management
-- **VLM inference** — the `/perceive` endpoint uses vision models; prompts and routing are private
-- **Private dataset** — the scored site database (D1 + R2) is not public, though stats are available via `/dataset/stats`
-- **Business analytics** — Telegram notifications, usage tracking
+The local engine, CLI, MCP server, and GitHub Action in this repo are MIT-licensed and fully self-contained for `--local` mode. The following are not part of the open-source package and live in a separate codebase:
+
+- **Hosted coordinator** — the queue, job dispatcher, and rate-limit logic
+- **Storage layer** — the scored site database and the crawl queue
+- **Hosted VLM inference** — the `/perceive` endpoint and its prompt engineering
+- **Account management** — API keys, credits, account state
+
+The local CLI works end-to-end without any of the above. To replicate the hosted behaviour, you can self-host a coordinator that speaks the [job protocol](#job-protocol); see the [self-hosting section](#self-hosting) below for the requirements.
 
 ---
 
 ## Self-hosting
 
-The backend runs on Cloudflare Workers + D1 + R2. A self-hosted instance would need:
+The hosted service runs on serverless infrastructure. A self-hosted instance that speaks the same job protocol would need:
 
-1. Cloudflare account
-2. D1 database with schema (tables: `sites`, `crawl_queue`, `api_tokens`, `credit_transactions`)
-3. R2 bucket for file storage
-4. Deploy the Hono app (not in this repo)
+1. An HTTP endpoint for `/crawl/claim` and `/crawl/complete`
+2. Persistent storage for sites and the crawl queue
+3. A screenshot store (or skip screenshots and serve only scores)
+4. An API-key table for cloud-command authentication
 
-The local CLI (`--local` flag) is a fully self-contained alternative — it runs the entire scoring engine without any hosted infrastructure.
+The local CLI (`--local` flag) is a fully self-contained alternative — it runs the entire scoring engine without any hosted infrastructure, and is what `npm install @mdvp/cli` actually does.
