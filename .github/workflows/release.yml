@@ -69,14 +69,19 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          registry-url: 'https://registry.npmjs.org'  # required: configures .npmrc so npm can initiate OIDC exchange
+          # registry-url is intentionally absent: setup-node with registry-url injects
+          # NODE_AUTH_TOKEN=${{ github.token }} into .npmrc, which overrides OIDC auth.
+          # We configure the registry manually below so npm sees the registry URL but
+          # no pre-set token, enabling the Trusted Publisher OIDC exchange.
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Configure registry (no token — Trusted Publisher will use OIDC)
+        run: npm config set registry https://registry.npmjs.org/
+
       - name: Publish (OIDC Trusted Publisher)
         run: npm publish --provenance --access public
-        # NODE_AUTH_TOKEN intentionally absent — Trusted Publisher uses OIDC, not a stored secret
 
   # ── 4. GitHub Release with auto-generated notes ───────────────────────────
   github-release:
