@@ -29,6 +29,7 @@ async function main() {
     text: flags.has("--text"),  // LLM-optimized compact format
     apiKey: cfg.apiKey ?? null,
     local: flags.has("--local"),
+    check: flags.has("--check"),  // threshold enforcement — exit 1 on violation
     daemon: flags.has("--daemon") || flags.has("-d"),
     tabs: parseInt(flagValues.tabs || "2") || 2,
   }
