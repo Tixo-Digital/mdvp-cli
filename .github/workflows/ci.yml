@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+  pack-check:
+    name: Package tarball check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tarball contents
+        run: |
+          npm pack --dry-run 2>&1 | tee /tmp/pack-out.txt
+          # Fail if secrets-adjacent files are included
+          if grep -E "(\.env|config\.json|AGENTS\.md|\.github|action/)" /tmp/pack-out.txt; then
+            echo "ERROR: sensitive or excluded file found in tarball"
+            exit 1
+          fi
+          # Verify required files ARE included
+          grep "cli.mjs" /tmp/pack-out.txt || (echo "ERROR: cli.mjs missing from tarball" && exit 1)
+          grep "engine/" /tmp/pack-out.txt || (echo "ERROR: engine/ missing from tarball" && exit 1)
+          echo "Tarball contents look good"
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for accidentally committed secrets
+        run: |
+          # Patterns that would indicate a leaked secret
+          PATTERNS=(
+            'sk-[a-zA-Z0-9]{20,}'
+            'AKIA[0-9A-Z]{16}'
+            'resend_[a-zA-Z0-9_]+'
+            'stripe_(live|test)_[a-zA-Z0-9]+'
+            'Bearer [a-zA-Z0-9._-]{20,}'
+          )
+          FOUND=0
+          for pat in "${PATTERNS[@]}"; do
+            if grep -rE "$pat" --include="*.mjs" --include="*.js" --include="*.ts" --include="*.json" \
+               --exclude-dir=node_modules --exclude-dir=.git .; then
+              echo "POTENTIAL SECRET FOUND: $pat"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -eq 1 ]; then
+            echo "Secret scan failed — review matches above"
+            exit 1
+          fi
+          echo "Secret scan passed"

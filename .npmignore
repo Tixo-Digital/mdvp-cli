@@ -1,0 +1,13 @@
+.DS_Store
+.env
+.env.*
+.git/
+.github/
+.sisyphus/
+.wrangler/
+AGENTS.md
+node_modules/
+npm-debug.log*
+action/
+scripts/
+docs/

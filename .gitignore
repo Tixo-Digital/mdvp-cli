@@ -1,0 +1,4 @@
+node_modules/
+.mdvp/
+*.log
+.DS_Store
