@@ -69,12 +69,14 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+          registry-url: 'https://registry.npmjs.org'  # required: configures .npmrc so npm can initiate OIDC exchange
 
       - name: Install dependencies
         run: npm ci
 
       - name: Publish (OIDC Trusted Publisher)
         run: npm publish --provenance --access public
+        # NODE_AUTH_TOKEN intentionally absent — Trusted Publisher uses OIDC, not a stored secret
 
   # ── 4. GitHub Release with auto-generated notes ───────────────────────────
   github-release:
