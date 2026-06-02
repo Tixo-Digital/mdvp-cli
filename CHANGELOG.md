@@ -7,6 +7,18 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.32.1] — 2026-06-02
+
+### Fixed
+
+- **MCP server version** — the stdio MCP server (`npx @mdvp/cli mcp`) now reports the actual package version (1.32.1) to clients during the `initialize` handshake, instead of the hardcoded `1.0.0` it shipped with. This means Claude, Cursor, OpenCode, Windsurf, and Cline will now show the correct version in their MCP server list, and any client that logs the server version will see a real number.
+
+### Changed
+
+- README now surfaces the algorithm GIF in a `### Pipeline` section right after the install block, so the visual walkthrough is the first thing readers see. The detailed `## How it works` section is unchanged further down.
+
+---
+
 ## [1.32.0] — 2026-06-02
 
 ### Changed
