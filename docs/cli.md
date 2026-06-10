@@ -57,6 +57,33 @@ Lowest: originality (38) · color (44) · spacing (51)
 
 JSON output adds a `source` field (`"local"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from.
 
+## Init
+
+Create starter project files for local checks and CI.
+
+```bash
+# Create .mdvprc with conservative thresholds
+npx @mdvp/cli init
+
+# Also create a GitHub Actions workflow
+npx @mdvp/cli init --github-action
+
+# Preview changes for scripts without writing files
+npx @mdvp/cli init --dry-run --json
+```
+
+Flags:
+
+| Flag | What it does |
+|---|---|
+| `--github-action` | Also create `.github/workflows/mdvp.yml` |
+| `--url=URL` | Bake a fixed URL into the generated workflow |
+| `--dry-run` | Report planned file changes without writing |
+| `--force` | Overwrite existing target files |
+| `--json` | Emit a stable machine-readable summary |
+
+`init` never requires an API key. Existing files are skipped unless `--force` is set. When `--github-action` is used without `--url`, the workflow reads a repository variable named `MDVP_TARGET_URL` or a manual workflow input named `url`.
+
 ## Compare
 
 Side-by-side comparison of two domains:

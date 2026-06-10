@@ -4,6 +4,20 @@ MDVP is designed to be a build-time gate. `--check` exits 1 on any threshold vio
 
 ## Quick start
 
+Generate starter files:
+
+```bash
+npx @mdvp/cli init --github-action
+```
+
+This creates `.mdvprc` and `.github/workflows/mdvp.yml` when they are missing. Existing files are skipped unless you pass `--force`. The generated workflow reads a repository variable named `MDVP_TARGET_URL`, or you can bake in a fixed target with:
+
+```bash
+npx @mdvp/cli init --github-action --url=https://preview.example.com
+```
+
+Manual setup:
+
 ```yaml
 # .github/workflows/design-quality.yml
 name: Design quality
