@@ -7,6 +7,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.33.0] — 2026-06-10
+
+### Added
+
+- **README badge generator** — `mdvp badge <domain>` prints README-ready shields.io markdown that links to `https://mdvp.dev`. URL input is normalized through the existing domain parser, and `--json` returns the same badge data in a script-friendly shape.
+- **Project init command** — `mdvp init` creates a conservative starter `.mdvprc` for local/CI threshold checks. `mdvp init --github-action` also creates `.github/workflows/mdvp.yml` for GitHub Actions onboarding.
+- **Init automation flags** — `mdvp init` supports `--dry-run`, `--json`, `--force`, and `--url=...` so agents and scripts can preview or generate setup files without secrets.
+- Tests for badge generation and init file planning/writes.
+
+### Changed
+
+- CLI help and docs now include `badge` and `init` onboarding paths.
+- `CHANGELOG.md` is included in the published npm tarball.
+
+---
+
 ## [1.32.1] — 2026-06-02
 
 ### Fixed
