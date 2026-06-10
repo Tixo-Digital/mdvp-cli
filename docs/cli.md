@@ -77,6 +77,17 @@ npx @mdvp/cli worst              # worst 10
 npx @mdvp/cli top --label=premium
 ```
 
+## Badge
+
+Print README-ready shields.io markdown for a public MDVP score badge:
+
+```bash
+npx @mdvp/cli badge mysite.com
+npx @mdvp/cli badge https://www.mysite.com/path --json
+```
+
+The command normalizes protocol, `www.`, and paths before building the badge URL. Default output is markdown for copy/paste; `--json` includes `domain`, `endpointUrl`, `imageUrl`, `targetUrl`, and `markdown` for scripts.
+
 ## Perceive
 
 Full MDVP-T/1.0 design perception for AI agents (DOM, entropy, saliency, motion taxonomy, classify, tokens, diagnosis, recommendations). `--live` crawls the URL on demand:

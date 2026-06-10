@@ -16,13 +16,31 @@ npx @mdvp/cli submit yoursite.com --local
 
 ## Add the badge
 
-In your project's README:
+Generate the markdown:
 
-```markdown
-[![MDVP](https://img.shields.io/endpoint?url=https://api.mdvp.dev/badge/yoursite.com)](https://mdvp.dev)
+```bash
+npx @mdvp/cli badge yoursite.com
 ```
 
-Replace `yoursite.com` with your domain (no protocol, no path). The badge image will render as:
+It prints:
+
+```markdown
+[![MDVP](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.mdvp.dev%2Fbadge%2Fyoursite.com)](https://mdvp.dev)
+```
+
+You can pass a full URL; the CLI normalizes it to the badge domain:
+
+```bash
+npx @mdvp/cli badge https://www.yoursite.com/pricing
+```
+
+For automation, use JSON:
+
+```bash
+npx @mdvp/cli badge yoursite.com --json
+```
+
+The badge image will render as:
 
 - **label**: `design`
 - **message**: e.g. `A 87` (the current grade + score)
