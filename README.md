@@ -51,6 +51,9 @@ npx @mdvp/cli audit myapp.com --swarm
 
 # JSON output for scripting
 npx @mdvp/cli audit myapp.com --json | jq .components.css_health
+
+# Print a README badge for your site
+npx @mdvp/cli badge myapp.com
 ```
 
 **Output:**
@@ -89,7 +92,11 @@ Puppeteer opens the URL, `getComputedStyle()` is read on every element, the scor
 
 ## Add a score badge to your project
 
-Show your MDVP score in your project's README: [docs/badge.md](docs/badge.md). Submit your site, drop in a shields.io endpoint, done.
+Show your MDVP score in your project's README: [docs/badge.md](docs/badge.md). Submit your site, then generate the shields.io markdown:
+
+```bash
+npx @mdvp/cli badge myapp.com
+```
 
 ## Contributing
 

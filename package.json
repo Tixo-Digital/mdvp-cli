@@ -10,7 +10,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs test/signals.test.mjs test/design-spec.test.mjs test/conflicts.test.mjs test/source-label.test.mjs test/audit-flags.test.mjs test/init.test.mjs test/mcp-version.test.mjs",
+    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs test/signals.test.mjs test/design-spec.test.mjs test/conflicts.test.mjs test/source-label.test.mjs test/audit-flags.test.mjs test/init.test.mjs test/mcp-version.test.mjs test/badge.test.mjs",
     "release:patch": "npm version patch --no-git-tag-version && node -e \"const v=require('./package.json').version; const {execSync:e}=require('child_process'); e('git add package.json package-lock.json'); e('git commit -m \"chore: release v'+v+'\"'); e('git tag v'+v); console.log('Created tag v'+v+'. Push with: git push && git push --tags')\"",
     "release:minor": "npm version minor --no-git-tag-version && node -e \"const v=require('./package.json').version; const {execSync:e}=require('child_process'); e('git add package.json package-lock.json'); e('git commit -m \"chore: release v'+v+'\"'); e('git tag v'+v); console.log('Created tag v'+v+'. Push with: git push && git push --tags')\"",
     "release:major": "npm version major --no-git-tag-version && node -e \"const v=require('./package.json').version; const {execSync:e}=require('child_process'); e('git add package.json package-lock.json'); e('git commit -m \"chore: release v'+v+'\"'); e('git tag v'+v); console.log('Created tag v'+v+'. Push with: git push && git push --tags')\""

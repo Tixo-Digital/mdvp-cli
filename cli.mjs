@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url'
 import { apiGet, apiPost, pickModule, API } from './lib/http.mjs'
 import { loadConfig, saveConfig, CONFIG_DIR, CONFIG_FILE } from './lib/config.mjs'
 import { VERSION, CATS, R, WELCOME, HELP_OVERVIEW, HELP_TOPICS, HELP_TOPIC_BY_COMMAND } from './lib/constants.mjs'
-import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar, parseDomain, toTextFormat } from './lib/format.mjs'
+import { DIM, BOLD, RED, GREEN, YELLOW, scoreColor, bar, parseDomain, badgeForDomain, toTextFormat } from './lib/format.mjs'
 import { cmdAudit } from './commands/audit.mjs'
 import { cmdCompare, cmdTop } from './commands/compare.mjs'
 import { cmdLogin, cmdBalance } from './commands/auth.mjs'
@@ -97,6 +97,10 @@ async function main() {
     const d = await apiGet("/dataset/stats")
     if (opts.json) { console.log(JSON.stringify(d, null, 2)); return }
     console.log(`\n  Total sites:   ${d.totalSites}\n  Average score: ${d.averageScore}\n`)
+  } else if (cmd === "badge" && arg1) {
+    const badge = badgeForDomain(arg1)
+    if (opts.json) { console.log(JSON.stringify(badge, null, 2)); return }
+    console.log(badge.markdown)
   } else if (cmd === "perceive" && arg1) {
     const isLive = flags.has("--live")
     const noVision = flags.has("--no-vision")
