@@ -14,6 +14,7 @@ import { cmdAudit } from './commands/audit.mjs'
 import { cmdCompare, cmdTop } from './commands/compare.mjs'
 import { cmdLogin, cmdBalance } from './commands/auth.mjs'
 import { cmdHire, cmdRecrawl, cmdSubmit } from './commands/hire.mjs'
+import { cmdInit } from './commands/init.mjs'
 
 async function main() {
   const argv = process.argv.slice(2)
@@ -32,6 +33,10 @@ async function main() {
     cloud: flags.has("--cloud"),  // explicit cloud dataset lookup (was default before v1.32.0)
     swarm: flags.has("--swarm"),  // local audit + contribute to public dataset
     check: flags.has("--check"),  // threshold enforcement — exit 1 on violation
+    dryRun: flags.has("--dry-run"),
+    force: flags.has("--force"),
+    githubAction: flags.has("--github-action"),
+    url: flagValues.url || null,
     design: flagValues.design || null,  // DESIGN.md path (default: auto-discover in cwd)
     daemon: flags.has("--daemon") || flags.has("-d"),
     tabs: parseInt(flagValues.tabs || "2") || 2,
@@ -74,6 +79,8 @@ async function main() {
     return
   } else if (cmd === "login") {
     await cmdLogin()
+  } else if (cmd === "init") {
+    await cmdInit(opts)
   } else if (cmd === "audit" && arg1) {
     await cmdAudit(arg1, opts)
   } else if (cmd === "submit" && arg1) {
