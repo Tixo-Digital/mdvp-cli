@@ -18,6 +18,7 @@ import eyebrowChip from './eyebrow-chip.mjs'
 import statusDot from './status-dot.mjs'
 import gradientText from './gradient-text.mjs'
 import emojiIcons from './emoji-icons.mjs'
+import genericMarketingCopy from './generic-marketing-copy.mjs'
 
 /** All registered signals, in declaration order. */
 export const SIGNALS = [
@@ -35,6 +36,7 @@ export const SIGNALS = [
   statusDot,
   gradientText,
   emojiIcons,
+  genericMarketingCopy,
 ]
 
 /**
