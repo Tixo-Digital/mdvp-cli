@@ -1,11 +1,12 @@
 name: Release
 
 # Trigger: push a semver tag — e.g. `git tag v1.32.0 && git push --tags`
+# Nightly prereleases use semver prerelease tags, e.g. `v1.33.1-nightly.20260611.1`.
 # The tag version MUST match package.json version (enforced below).
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]*'
+      - 'v*.*.*'
 
 permissions:
   contents: write   # create GitHub Release
@@ -54,6 +55,7 @@ jobs:
             echo "Run: npm version $TAG --no-git-tag-version, commit, then retag."
             exit 1
           fi
+          node -e "const semver='${TAG}'; if (!/^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$/.test(semver)) { console.error('ERROR: tag is not a supported semver release tag'); process.exit(1) }"
 
   # ── 3. Publish to npm (Trusted Publisher — no NPM_TOKEN secret required) ───
   # One-time setup on npmjs.com → @mdvp/cli → Settings → Publishing → Trusted Publishers:
@@ -93,8 +95,8 @@ jobs:
         if: steps.npm-version.outputs.published != 'true'
         run: |
           if [[ "${{ github.ref_name }}" == *-* ]]; then
-            echo "Pre-release detected, using --tag=next so it does not replace latest"
-            npm publish --provenance --access public --tag=next
+            echo "Pre-release detected, using --tag=nightly so it does not replace latest"
+            npm publish --provenance --access public --tag=nightly
           else
             npm publish --provenance --access public
           fi
@@ -115,6 +117,12 @@ jobs:
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "GitHub Release $GITHUB_REF_NAME already exists; leaving it in place."
+          elif [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            gh release create "$GITHUB_REF_NAME" \
+              --title "Nightly $GITHUB_REF_NAME" \
+              --prerelease \
+              --generate-notes \
+              --verify-tag
           else
             gh release create "$GITHUB_REF_NAME" \
               --title "Release $GITHUB_REF_NAME" \

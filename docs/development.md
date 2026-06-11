@@ -104,6 +104,22 @@ The [release workflow](../.github/workflows/release.yml) runs the full CI matrix
 
 The package uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN` secret is required. The workflow uses OIDC identity tokens directly against npmjs.com.
 
+## Nightly releases
+
+Nightly automation ships prerelease artifacts from Cloud Codex / GitHub Actions, not from a local laptop. Local agent work may prepare a branch, PR, version bump, and tag, but publishing must happen through the release workflow so npm provenance and GitHub release history stay reproducible.
+
+Use a semver prerelease version:
+
+```bash
+npm version 1.33.1-nightly.20260611.1 --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore: release nightly v1.33.1-nightly.20260611.1"
+git tag v1.33.1-nightly.20260611.1
+git push && git push origin v1.33.1-nightly.20260611.1
+```
+
+Prerelease tags publish to npm with dist-tag `nightly` and create GitHub prereleases. They must not update npm `latest`. Stable releases still use `release:patch`, `release:minor`, or `release:major` after the intended nightly changes are merged into the larger release branch.
+
 ## Contributing
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for the contribution policy, code of conduct, and the contributor license.
