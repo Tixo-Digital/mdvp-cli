@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+  "packages": {
+    "nodejs_22": {
+      "version": "latest",
+      "disable_plugin": true
+    },
+    "git":       "latest",
+    "gh":        "latest",
+    "glab":      "latest",
+    "jq":        "latest",
+    "chromium": {
+      "version":            "latest",
+      "excluded_platforms": ["aarch64-darwin"]
+    }
+  },
+  "env": {
+    "PUPPETEER_SKIP_DOWNLOAD": "true"
+  },
+  "shell": {
+    "init_hook": [
+      "export PUPPETEER_EXECUTABLE_PATH=\"${PUPPETEER_EXECUTABLE_PATH:-$(command -v chromium || command -v chromium-browser || command -v google-chrome || true)}\""
+    ],
+    "scripts": {
+      "verify": [
+        "npm ci",
+        "npm test",
+        "npm pack --dry-run"
+      ],
+      "smoke": [
+        "node cli.mjs help",
+        "node cli.mjs top 5",
+        "node cli.mjs stats --json"
+      ],
+      "audit-smoke": [
+        "node cli.mjs audit mdvp.dev --json"
+      ]
+    }
+  }
+}

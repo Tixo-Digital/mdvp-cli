@@ -51,6 +51,7 @@ A directory of independent detectors — [`engine/signals/`](../engine/signals/)
 | `eyebrow-chip` | Small badge above the H1 — generated-hero cliché |
 | `status-dot` | Decorative green "online" dots implying fake live state |
 | `gradient-text` | Gradient-filled headlines (`background-clip: text`) |
+| `generic-marketing-copy` | Repeated broad phrases such as "revolutionize" or "next-generation" |
 | `sparse-content` | Placeholder page, very few elements |
 | `no-design-tokens` | Fewer than ~5 CSS custom properties |
 | `emoji-icons` | Emoji standing in for an icon set |

@@ -134,4 +134,10 @@ describe('new anti-pattern signals', () => {
     assert.equal(find('gradient-text').test({ gradientTextCount: 0 }, ctx), null)
     assert.ok(find('gradient-text').test({ gradientTextCount: 2 }, ctx))
   })
+
+  it('generic-marketing-copy fires on repeated generic phrases', () => {
+    assert.equal(find('generic-marketing-copy').test({ genericTextCount: 1 }, ctx), null)
+    assert.ok(find('generic-marketing-copy').test({ genericTextCount: 2 }, ctx))
+    assert.equal(find('generic-marketing-copy').test({ genericTextCount: 4 }, ctx).penalty, 15)
+  })
 })

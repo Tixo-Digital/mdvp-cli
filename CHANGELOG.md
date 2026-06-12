@@ -7,6 +7,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Generic marketing copy signal** — `originality` now flags repeated broad phrases already counted by the DOM extractor, such as "revolutionize" and "next-generation".
+
+---
+
 ## [1.33.0] — 2026-06-10
 
 ### Added

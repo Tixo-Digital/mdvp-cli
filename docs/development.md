@@ -10,7 +10,21 @@ cd mdvp-cli
 npm ci
 ```
 
-Node 18+ is required. No system dependencies — the engine is pure JS and Puppeteer's Chromium downloads on first `audit --local`.
+Node 18+ is required. The engine is pure JS. Local browser audits use Puppeteer and need a Chromium binary.
+
+## Cloud Codex / Devbox
+
+Nightly automation runs in Cloud Codex and should use the repository devbox environment when available:
+
+```bash
+devbox shell
+devbox run verify
+devbox run smoke
+```
+
+[`devbox.json`](../devbox.json) pins Node 22, Git, GitHub CLI, GitLab CLI, `jq`, and Chromium. The shell exports `PUPPETEER_EXECUTABLE_PATH` to the devbox Chromium and sets `PUPPETEER_SKIP_DOWNLOAD=true`, so browser smokes can run without apt/snap or a local desktop Chrome. Chromium is excluded on `aarch64-darwin`, where the local Chrome for Testing install is used instead.
+
+Use `devbox run audit-smoke` for the bounded browser smoke when the runner allows Chromium. If the Cloud Codex runner blocks headless browser launch, document the skip or hang in the GitLab handoff and rely on `verify`, `smoke`, and GitHub CI.
 
 ## Run the tests
 
@@ -103,6 +117,22 @@ git push && git push --tags
 The [release workflow](../.github/workflows/release.yml) runs the full CI matrix, verifies the tag matches `package.json`, publishes to npm with OIDC provenance, and creates a GitHub Release with auto-generated notes.
 
 The package uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN` secret is required. The workflow uses OIDC identity tokens directly against npmjs.com.
+
+## Nightly releases
+
+Nightly automation ships prerelease artifacts from Cloud Codex / GitHub Actions, not from a local laptop. Local agent work may prepare a branch, PR, version bump, and tag, but publishing must happen through the release workflow so npm provenance and GitHub release history stay reproducible.
+
+Use a semver prerelease version:
+
+```bash
+npm version 1.33.1-nightly.20260611.1 --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore: release nightly v1.33.1-nightly.20260611.1"
+git tag v1.33.1-nightly.20260611.1
+git push && git push origin v1.33.1-nightly.20260611.1
+```
+
+Prerelease tags publish to npm with dist-tag `nightly` and create GitHub prereleases. They must not update npm `latest`. Stable releases still use `release:patch`, `release:minor`, or `release:major` after the intended nightly changes are merged into the larger release branch.
 
 ## Contributing
 
