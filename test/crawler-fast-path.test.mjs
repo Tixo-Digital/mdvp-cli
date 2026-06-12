@@ -8,7 +8,8 @@ describe('crawler fast audit path', () => {
   it('keeps CRAWL_ONCE_STDOUT on a metrics-only fast path by default', () => {
     assert.match(src, /async function crawlUrl\(browser, url, options = \{\}\)/)
     assert.match(src, /const artifacts = options\.artifacts !== false/)
-    assert.match(src, /const fast = options\.fast === true \|\| !artifacts/)
+    assert.match(src, /const fast = options\.fast === true/)
+    assert.doesNotMatch(src, /const fast = options\.fast === true \|\| !artifacts/)
     assert.match(src, /artifacts:\s*!stdoutMode \|\| includeScreenshots/)
     assert.match(src, /fast:\s*!exactMode && \(forceFast \|\| \(stdoutMode && !includeScreenshots\)\)/)
   })

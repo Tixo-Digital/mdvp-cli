@@ -148,7 +148,7 @@ async function extractCSSDesignDNA(page) {
 
 async function crawlUrl(browser, url, options = {}) {
   const artifacts = options.artifacts !== false
-  const fast = options.fast === true || !artifacts
+  const fast = options.fast === true
   const page = await browser.newPage()
   page.setDefaultTimeout(20000)
   const consoleMessages = []
