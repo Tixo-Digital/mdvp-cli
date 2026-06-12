@@ -9,9 +9,27 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.33.1-nightly.20260612.2] — 2026-06-12
+
 ### Added
 
 - **Generic marketing copy signal** — `originality` now flags repeated broad phrases already counted by the DOM extractor, such as "revolutionize" and "next-generation".
+- **Snapshot diff command** — `mdvp diff <before.json> <after.json>` compares saved audit JSON locally with deterministic component/category deltas for scripts and PR review.
+- **Adoption proof docs** — README/docs now include a concrete development-proof workflow, benchmark caveats, richer npm keywords, and packaged docs for adoption/onboarding.
+- **Static Rust analyzer** — default `audit <domain>` now uses a no-Chromium static HTML/CSS analyzer with a Rust implementation and JS fallback. JSON identifies `source: "static"` and includes analyzer limitations.
+- **Exact audit e2e** — browser-backed `--exact` has an e2e test that proves it does not use the static/fast request-abort path.
+
+### Changed
+
+- **Faster exact audits** — metrics-only `audit --exact --json` keeps the rendered browser path but uses shorter waits and `load` navigation by default. `mdvp.dev` local smoke improved from about 6.12s to 2.55s while preserving score/source.
+- **Faster static audits** — same-origin CSS fetching is concurrent and capped. `mdvp.dev` static smoke was about 360ms with the Rust analyzer.
+- **Nightly release workflow** — prerelease tags publish through Trusted Publishing under npm dist-tag `nightly` and create GitHub prereleases.
+
+### Fixed
+
+- **Bounded local browser child** — browser-backed local crawls keep the parent-side timeout/cleanup from the previous timeout work so stuck child processes are terminated.
 
 ---
 

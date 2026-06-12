@@ -1,6 +1,6 @@
 {
   "name": "@mdvp/cli",
-  "version": "1.33.1-nightly.20260611.2",
+  "version": "1.33.1-nightly.20260612.2",
   "description": "Design linter for AI-generated frontends: deterministic rendered-DOM audits, CI gates, and MCP design-quality signals",
   "bin": {
     "mdvp": "./cli.mjs"

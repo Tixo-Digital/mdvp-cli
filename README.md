@@ -1,6 +1,6 @@
 # @mdvp/cli
 
-**Design linter for AI-generated frontends.** Audit any live URL for HTML/CSS quality, design-system drift, accessibility-relevant structure, and common AI UI patterns. Default audits run locally through the static Rust analyzer with no API key, no account, no Chromium, and no screenshot baseline; `--exact` uses Chromium for rendered-DOM evidence.
+**Design linter for AI-generated frontends.** Audit any live URL for HTML/CSS quality, design-system drift, accessibility-relevant structure, and common AI UI patterns. Default audits run locally through the static Rust analyzer with no API key, no account, and no screenshot baseline; Chromium is only used when you pass `--exact` for rendered-DOM evidence.
 
 [![CI](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
