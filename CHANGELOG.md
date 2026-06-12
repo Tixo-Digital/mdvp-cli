@@ -12,6 +12,11 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - **Generic marketing copy signal** — `originality` now flags repeated broad phrases already counted by the DOM extractor, such as "revolutionize" and "next-generation".
+- **JSON snapshot diff command** — `mdvp diff <before.json> <after.json>` compares saved audit JSON snapshots without crawling or calling the API. Text output shows score deltas; `--json` returns deterministic before/after/delta fields for scripts.
+
+### Fixed
+
+- **Bounded local audit smoke** — local `audit --json` now uses metrics-only crawl output unless screenshots are explicitly requested, and the parent CLI enforces an overall crawler timeout with child-process cleanup.
 
 ---
 
