@@ -23,13 +23,16 @@
     "engine/",
     "lib/",
     "docs/",
+    "containers/",
     "native/mdvp-static/Cargo.lock",
     "native/mdvp-static/Cargo.toml",
     "native/mdvp-static/src/",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "SECURITY.md"
+    "SECURITY.md",
+    "flake.nix",
+    "flake.lock"
   ],
   "keywords": [
     "design-linter",

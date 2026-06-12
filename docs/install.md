@@ -41,6 +41,17 @@ npm i -D @mdvp/cli
 npx mdvp audit myapp.com
 ```
 
+### Download from GitHub Releases
+
+GitHub Releases include the npm package tarball and a SHA256 checksum:
+
+```bash
+npm i -g ./mdvp-cli-<version>.tgz
+mdvp audit myapp.com
+```
+
+The release tarball is downloadable and reproducible, but it is not a standalone native binary. It still requires Node.js 18+ and, for default exact audits, a browser runtime.
+
 ## First run
 
 The first default audit may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`) if no compatible browser is already available. To skip that download and use your system Chrome instead:
@@ -76,6 +87,8 @@ Releases follow [semver](https://semver.org). The [CHANGELOG](../CHANGELOG.md) i
 ## Troubleshooting
 
 **Puppeteer download blocked** — default `audit` uses the browser-backed exact path. Set `PUPPETEER_DOWNLOAD_BASE_URL` to an internal mirror, use `PUPPETEER_EXECUTABLE_PATH` to point at an existing browser, or opt into the approximate static/cache shortcut with `MDVP_USE_CACHE=1 --fast`.
+
+**Minimal containers** — Alpine, Debian slim, and distroless images usually do not include npm, unzip, Chromium, or browser shared libraries. Use the static/cache profile (`MDVP_USE_CACHE=1 --fast`) or a browser-equipped image for exact mode. See [Containers](container.md).
 
 **Permission errors on `~/.cache/puppeteer`** — set `PUPPETEER_CACHE_DIR` to a writable location.
 

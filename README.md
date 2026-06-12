@@ -110,6 +110,8 @@ Default audit uses Puppeteer for rendered DOM and computed style evidence, group
 - [Scoring](docs/scoring.md) — what the four components measure, the signal registry
 - [DESIGN.md compliance](docs/design-md.md) — diff audited page metrics against your design system
 - [CI enforcement](docs/ci.md) — `.mdvprc`, GitHub Action, exit codes, other CI systems
+- [Containers](docs/container.md) — Alpine, distroless, Apple Container, and exact/browser image guidance
+- [Nix](docs/nix.md) — `nix develop`, reproducible verify/smoke apps, and NixOS notes
 - [MCP server](docs/mcp-server.md) — plug into Claude, OpenCode, Cursor, Windsurf, Cline
 - [Architecture](docs/architecture.md) — components, job protocol, self-hosting
 - [Methodology](docs/methodology.md) — full scoring paper (4 pillars, weight table)

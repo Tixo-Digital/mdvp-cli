@@ -26,6 +26,19 @@ devbox run smoke
 
 Use `devbox run audit-smoke` for the bounded browser smoke when the runner allows Chromium. If the Cloud Codex runner blocks headless browser launch, document the skip or hang in the GitLab handoff and rely on `verify`, `smoke`, and GitHub CI.
 
+## Nix
+
+The repository also includes [`flake.nix`](../flake.nix) for NixOS and teams that prefer native Nix commands:
+
+```bash
+nix develop
+nix run .#verify
+nix run .#smoke
+nix run .#static-audit
+```
+
+See [Nix](nix.md) for platform notes and the distinction between Nix development shells and OCI image builds.
+
 ## Run the tests
 
 ```bash

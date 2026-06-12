@@ -111,6 +111,19 @@ jobs:
         with:
           fetch-depth: 0   # full history so --generate-notes can diff tags
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Pack release tarball asset
+        id: pack
+        run: |
+          npm pack --json > npm-pack.json
+          PACK_FILE=$(node -e "const pack = require('./npm-pack.json'); console.log(pack[0].filename)")
+          sha256sum "$PACK_FILE" > "$PACK_FILE.sha256"
+          echo "file=$PACK_FILE" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -129,3 +142,12 @@ jobs:
               --generate-notes \
               --verify-tag
           fi
+
+      - name: Upload release tarball asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            "${{ steps.pack.outputs.file }}" \
+            "${{ steps.pack.outputs.file }}.sha256" \
+            --clobber
