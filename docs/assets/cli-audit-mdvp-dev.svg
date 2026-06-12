@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="426" viewBox="0 0 860 426" role="img" aria-labelledby="title desc">
+  <title id="title">MDVP CLI audit output for mdvp.dev</title>
+  <desc id="desc">Terminal screenshot showing an MDVP local crawl score for mdvp.dev.</desc>
+  <rect width="860" height="426" rx="10" fill="#0f172a"/>
+  <rect x="0" y="0" width="860" height="36" rx="10" fill="#111827"/>
+  <circle cx="22" cy="18" r="5" fill="#ef4444"/>
+  <circle cx="40" cy="18" r="5" fill="#f59e0b"/>
+  <circle cx="58" cy="18" r="5" fill="#10b981"/>
+  <text x="78" y="23" fill="#94a3b8" font-family="SFMono-Regular, Consolas, Liberation Mono, monospace" font-size="13">npx @mdvp/cli audit mdvp.dev</text>
+  <g font-family="SFMono-Regular, Consolas, Liberation Mono, monospace" font-size="16" xml:space="preserve">
+  <text x="28" y="62" fill="#e5e7eb">crawling https://mdvp.dev locally...</text>
+  <text x="28" y="84" fill="#e5e7eb">[worker-0wldu9] launching browser...</text>
+  <text x="28" y="106" fill="#e5e7eb"> </text>
+  <text x="28" y="128" fill="#fde68a">mdvp.dev  B+  75/100  local crawl</text>
+  <text x="28" y="150" fill="#e5e7eb"> </text>
+  <text x="28" y="172" fill="#bbf7d0">  css_health      ████████░░  84  17 colors · 5 fonts · 77% on grid</text>
+  <text x="28" y="194" fill="#bbf7d0">  visual_quality  ████████░░  75</text>
+  <text x="28" y="216" fill="#bbf7d0">  structure       ████████░░  79</text>
+  <text x="28" y="238" fill="#bbf7d0">  originality     ██████░░░░  61</text>
+  <text x="28" y="260" fill="#e5e7eb"> </text>
+  <text x="28" y="282" fill="#e5e7eb">entropy 0.76 · apca none · grid 77%</text>
+  <text x="28" y="304" fill="#cbd5e1">Lowest: Readability (42) · Originality (61) · Visual Polish (65)</text>
+  <text x="28" y="326" fill="#e5e7eb"> </text>
+  <text x="28" y="348" fill="#e5e7eb">  · 5 font families. Professional limit: 2</text>
+  <text x="28" y="370" fill="#e5e7eb">  · Color system detected: clear neutrals + limited accents</text>
+  </g>
+</svg>

@@ -1,24 +1,26 @@
-```
-  ███╗   ███╗██████╗ ██╗   ██╗██████╗
-  ████╗ ████║██╔══██╗██║   ██║██╔══██╗
-  ██╔████╔██║██║  ██║██║   ██║██████╔╝
-  ██║╚██╔╝██║██║  ██║╚██╗ ██╔╝██╔═══╝
-  ██║ ╚═╝ ██║██████╔╝ ╚████╔╝ ██║
-  ╚═╝     ╚═╝╚═════╝   ╚═══╝  ╚═╝
-```
-
 # @mdvp/cli
+
+**Design linter for AI-generated frontends.** Audit any live URL for rendered CSS quality, design-system drift, accessibility-relevant structure, and common AI UI patterns. Runs locally via Puppeteer with no API key, no account, and no screenshot baseline.
 
 [![CI](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**DOM analysis for any live URL.** Counts, ratios, and a pattern registry for the rendered HTML. Runs locally via Puppeteer — no API key, no account, no baseline needed.
-
 ```bash
 npx @mdvp/cli audit myapp.com
 ```
+
+![MDVP CLI audit output for mdvp.dev](docs/assets/cli-audit-mdvp-dev.png)
+
+MDVP gives teams and agents a deterministic design-quality signal before a page has users, screenshots, or a baseline. It reads the rendered DOM with `getComputedStyle()`, measures color/spacing/type discipline, checks APCA contrast and semantic structure, and flags common generated-UI patterns such as default Tailwind palettes, pill-radius everything, generic hero chips, and missing design tokens.
+
+Use it to:
+
+- Catch vibe-coded UI drift before merge.
+- Gate preview URLs in CI with `audit --check`.
+- Give Cursor, Claude, OpenCode, Windsurf, and Cline an MCP design-quality tool.
+- Publish a score badge after submitting a public result.
 
 ### Pipeline
 
@@ -28,9 +30,21 @@ Puppeteer opens the URL → `getComputedStyle()` reads every element → 12 cate
 
 ---
 
+## Development Proof
+
+MDVP is useful when it gives a developer a concrete next change, not just a score.
+
+- **Dogfood finding:** `node cli.mjs audit mdvp.dev --timeout=45000 --no-header` produced B+ 75/100 and flagged an actionable issue: 5 font families on the rendered page where the professional limit is 2. The next engineering task is clear: consolidate the site typography stack and re-run the audit.
+- **Before/after workflow:** the reproducible design-system fixture starts at 95/A+; stacking generated-UI problems drops it to 60/B- with originality at 0. That maps directly to development actions: reduce font families, replace default Tailwind purple-blue gradients, normalize pill radii, add semantic design tokens, and add real content.
+- **PR gate:** `npx @mdvp/cli init --github-action` turns those same checks into a preview-URL CI gate, so color sprawl, font drift, low spacing-grid adherence, and banned generated-UI signals fail before merge.
+
+See [Development proof](docs/development-proof.md) for the concrete workflow and [Benchmark](docs/benchmark.md) for the validation caveats.
+
+---
+
 ## Why
 
-Tools like v0, Bolt, Lovable, and Cursor generate frontends fast — but the output often shares common patterns: Inter as the primary font, Tailwind's default purple-blue-pink gradient palette, every button is `border-radius: 9999px`, 40+ unique CSS colors with no system. Visual regression tools can't help (no prior snapshot to compare against); linters check syntax, not rendered quality.
+Tools like v0, Bolt, Lovable, and Cursor generate frontends fast — but the output often shares common patterns: Inter as the primary font, Tailwind's default purple-blue-pink gradient palette, every button is `border-radius: 9999px`, 40+ unique CSS colors with no system. Visual regression tools can't help when there is no prior screenshot to compare against; code linters check syntax, not rendered quality.
 
 MDVP gives you numbers on the rendered DOM. It instruments the page, extracts computed CSS values via `getComputedStyle()`, runs perceptual color analysis in Oklab space, and counts against design-system heuristics. The scoring is deterministic: the same DOM produces the same score, bit-identical.
 
@@ -42,6 +56,9 @@ npx @mdvp/cli audit myapp.com
 
 # Enforce thresholds in CI — exits 1 on violation
 npx @mdvp/cli audit myapp.com --check
+
+# Create starter .mdvprc and GitHub Actions workflow
+npx @mdvp/cli init --github-action
 
 # Look up a known site from the public dataset (no local crawl)
 npx @mdvp/cli audit myapp.com --cloud
@@ -88,6 +105,7 @@ Puppeteer opens the URL, `getComputedStyle()` is read on every element, the scor
 - [Architecture](docs/architecture.md) — components, job protocol, self-hosting
 - [Methodology](docs/methodology.md) — full scoring paper (4 pillars, weight table)
 - [Benchmark](docs/benchmark.md) — sensitivity / ablation + live reference panel
+- [Adoption playbook](docs/adoption.md) — examples, positioning, and honest distribution loops
 - [Development](docs/development.md) — setup, tests, adding a signal, cutting a release
 
 ## Add a score badge to your project

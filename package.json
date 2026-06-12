@@ -1,7 +1,7 @@
 {
   "name": "@mdvp/cli",
   "version": "1.33.0",
-  "description": "Machine Design Vision Protocol — gives agents eyes to understand design quality",
+  "description": "Design linter for AI-generated frontends: deterministic rendered-DOM audits, CI gates, and MCP design-quality signals",
   "bin": {
     "mdvp": "./cli.mjs"
   },
@@ -10,7 +10,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs test/signals.test.mjs test/design-spec.test.mjs test/conflicts.test.mjs test/source-label.test.mjs test/audit-flags.test.mjs test/init.test.mjs test/mcp-version.test.mjs test/badge.test.mjs",
+    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs test/signals.test.mjs test/design-spec.test.mjs test/conflicts.test.mjs test/source-label.test.mjs test/audit-flags.test.mjs test/init.test.mjs test/mcp-version.test.mjs test/badge.test.mjs test/adoption-surface.test.mjs test/benchmark-evidence.test.mjs",
     "release:patch": "npm version patch --no-git-tag-version && node -e \"const v=require('./package.json').version; const {execSync:e}=require('child_process'); e('git add package.json package-lock.json'); e('git commit -m \"chore: release v'+v+'\"'); e('git tag v'+v); console.log('Created tag v'+v+'. Push with: git push && git push --tags')\"",
     "release:minor": "npm version minor --no-git-tag-version && node -e \"const v=require('./package.json').version; const {execSync:e}=require('child_process'); e('git add package.json package-lock.json'); e('git commit -m \"chore: release v'+v+'\"'); e('git tag v'+v); console.log('Created tag v'+v+'. Push with: git push && git push --tags')\"",
     "release:major": "npm version major --no-git-tag-version && node -e \"const v=require('./package.json').version; const {execSync:e}=require('child_process'); e('git add package.json package-lock.json'); e('git commit -m \"chore: release v'+v+'\"'); e('git tag v'+v); console.log('Created tag v'+v+'. Push with: git push && git push --tags')\""
@@ -21,12 +21,26 @@
     "commands/",
     "engine/",
     "lib/",
+    "docs/",
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
     "SECURITY.md"
   ],
   "keywords": [
+    "design-linter",
+    "frontend-quality",
+    "ai-ui",
+    "vibe-code",
+    "visual-regression",
+    "github-action",
+    "mcp",
+    "design-system",
+    "design-tokens",
+    "accessibility",
+    "apca",
+    "oklab",
+    "css",
     "design",
     "audit",
     "cli",
