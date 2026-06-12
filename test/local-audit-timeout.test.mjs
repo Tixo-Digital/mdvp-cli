@@ -1,10 +1,11 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { EventEmitter } from 'node:events'
 import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 
-import { cacheShortcutsEnabled, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker } from '../commands/audit-local.mjs'
+import { cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker } from '../commands/audit-local.mjs'
 
 function tempScript(contents) {
   const cwd = mkdtempSync(join(tmpdir(), 'mdvp-audit-timeout-'))
@@ -94,6 +95,25 @@ describe('runCrawlerWorker', () => {
         timeoutMs: 50,
       }),
       /local crawl timed out after 50ms/,
+    )
+  })
+})
+
+describe('installCrawlerDependencies', () => {
+  it('reports missing npm as an actionable exact-runtime error', async () => {
+    const spawnMissingNpm = () => {
+      const child = new EventEmitter()
+      queueMicrotask(() => {
+        const err = new Error('spawn npm ENOENT')
+        err.code = 'ENOENT'
+        child.emit('error', err)
+      })
+      return child
+    }
+
+    await assert.rejects(
+      installCrawlerDependencies('/tmp/mdvp-missing-npm-test', spawnMissingNpm),
+      /Exact browser audit requires npm.*MDVP_USE_CACHE=1/s,
     )
   })
 })

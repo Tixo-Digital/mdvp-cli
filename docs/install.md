@@ -77,6 +77,8 @@ Releases follow [semver](https://semver.org). The [CHANGELOG](../CHANGELOG.md) i
 
 **Puppeteer download blocked** — default `audit` uses the browser-backed exact path. Set `PUPPETEER_DOWNLOAD_BASE_URL` to an internal mirror, use `PUPPETEER_EXECUTABLE_PATH` to point at an existing browser, or opt into the approximate static/cache shortcut with `MDVP_USE_CACHE=1 --fast`.
 
+**Minimal containers** — Alpine, Debian slim, and distroless images usually do not include npm, unzip, Chromium, or browser shared libraries. Use the static/cache profile (`MDVP_USE_CACHE=1 --fast`) or a browser-equipped image for exact mode. See [Containers](container.md).
+
 **Permission errors on `~/.cache/puppeteer`** — set `PUPPETEER_CACHE_DIR` to a writable location.
 
 **Sandbox / no-sandbox** — on minimal containers, pass `--no-sandbox` via the env var `MDVP_PUPPETEER_ARGS='["--no-sandbox"]'`.

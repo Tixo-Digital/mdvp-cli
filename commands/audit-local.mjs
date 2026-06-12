@@ -105,6 +105,33 @@ async function runCrawlerWorker({ cwd, env, timeoutMs, workerPath }) {
   })
 }
 
+function crawlerInstallErrorMessage(kind) {
+  const base = 'Exact browser audit requires npm plus a Chromium-compatible browser runtime.'
+  const container = 'In minimal containers, use the static shortcut with MDVP_USE_CACHE=1, or use a browser image with npm, unzip, Chromium libraries, and MDVP_PUPPETEER_ARGS=\'["--no-sandbox"]\'.'
+  if (kind === 'missing-npm') return `${base} npm was not found on PATH. ${container}`
+  return `${base} Puppeteer install failed. ${container}`
+}
+
+async function installCrawlerDependencies(dir, spawnChild) {
+  return await new Promise((resolve, reject) => {
+    let settled = false
+    const child = spawnChild("npm", ["install", "--prefer-offline"], { cwd: dir, stdio: "inherit" })
+
+    child.on("error", (err) => {
+      if (settled) return
+      settled = true
+      const kind = err?.code === 'ENOENT' ? 'missing-npm' : 'install-failed'
+      reject(new Error(crawlerInstallErrorMessage(kind)))
+    })
+
+    child.on("exit", (code) => {
+      if (settled) return
+      settled = true
+      code === 0 ? resolve() : reject(new Error(crawlerInstallErrorMessage('install-failed')))
+    })
+  })
+}
+
 export async function cmdAuditLocal(domain, opts = {}) {
   const { json, raw, text, source = "local" } = opts
   const runtime = resolveLocalAuditRuntime({ ...opts, source })
@@ -140,10 +167,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
 
     if (!existsSync(`${dir}/node_modules/puppeteer`)) {
       process.stderr.write(`${DIM}installing puppeteer (first run ~30s)...${R}\n`)
-      await new Promise((res, rej) => {
-        const child = spawn("npm", ["install", "--prefer-offline"], { cwd: dir, stdio: "inherit" })
-        child.on("exit", (code) => code === 0 ? res() : rej(new Error(`npm install failed`)))
-      })
+      await installCrawlerDependencies(dir, spawn)
     }
 
     const isLinux = process.platform === "linux"
@@ -308,4 +332,4 @@ export async function cmdAuditLocal(domain, opts = {}) {
   return payload
 }
 
-export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }
+export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }

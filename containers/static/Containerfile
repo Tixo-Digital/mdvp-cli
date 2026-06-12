@@ -1,0 +1,16 @@
+ARG NODE_IMAGE=docker.io/library/node:22-bookworm-slim
+ARG DISTROLESS_IMAGE=gcr.io/distroless/nodejs22-debian12:nonroot
+ARG MDVP_VERSION=latest
+
+FROM ${NODE_IMAGE} AS deps
+ARG MDVP_VERSION
+WORKDIR /app
+RUN npm install --omit=dev --no-audit --no-fund "@mdvp/cli@${MDVP_VERSION}"
+
+FROM ${DISTROLESS_IMAGE}
+ENV NODE_ENV=production
+ENV MDVP_USE_CACHE=1
+WORKDIR /tmp
+COPY --from=deps /app /app
+ENTRYPOINT ["/nodejs/bin/node", "/app/node_modules/@mdvp/cli/cli.mjs"]
+CMD ["help"]

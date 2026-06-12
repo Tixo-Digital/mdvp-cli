@@ -23,6 +23,7 @@
     "engine/",
     "lib/",
     "docs/",
+    "containers/",
     "native/mdvp-static/Cargo.lock",
     "native/mdvp-static/Cargo.toml",
     "native/mdvp-static/src/",

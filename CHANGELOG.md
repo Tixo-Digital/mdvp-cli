@@ -9,6 +9,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Container packaging docs** — added a distroless static container recipe and a runtime matrix for Alpine, Debian slim, Apple Container, Nix/devbox, and exact/browser images.
+
+### Fixed
+
+- **Minimal container exact errors** — exact/browser audits now report a concise runtime requirement when npm is unavailable instead of crashing with a Node `spawn npm ENOENT` stacktrace.
+
 ---
 
 ## [1.34.1] — 2026-06-12
