@@ -9,9 +9,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.34.1] — 2026-06-12
+
 ### Changed
 
 - **Exact audit default** — plain `audit <domain>` now uses the rendered browser path by default. Static/cache shortcuts are approximate and require `MDVP_USE_CACHE=1`; use `--fast` with that env var to make the shortcut explicit in scripts. `--exact` remains as an explicit alias for the default browser path.
+- **CLI screenshot asset** — README now uses the real terminal screenshot for the exact `mdvp.dev` audit output.
 
 ---
 
