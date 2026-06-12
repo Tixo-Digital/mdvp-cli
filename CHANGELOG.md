@@ -11,7 +11,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.33.1-nightly.20260612.2] — 2026-06-12
+## [1.34.0] — 2026-06-12
 
 ### Added
 
