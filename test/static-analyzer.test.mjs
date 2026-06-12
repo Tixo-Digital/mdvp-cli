@@ -57,4 +57,47 @@ describe('static analyzer', () => {
       await new Promise((resolve) => server.close(resolve))
     }
   })
+
+  it('fetches same-origin stylesheets concurrently while keeping the stylesheet cap', async () => {
+    let activeCss = 0
+    let maxActiveCss = 0
+    let cssRequests = 0
+    const server = createServer(async (req, res) => {
+      if (req.url?.startsWith('/style-')) {
+        activeCss += 1
+        cssRequests += 1
+        maxActiveCss = Math.max(maxActiveCss, activeCss)
+        await new Promise((resolve) => setTimeout(resolve, 75))
+        activeCss -= 1
+        res.writeHead(200, { 'content-type': 'text/css' })
+        res.end(`
+          body { color: #111111; font-family: Inter, sans-serif; font-size: 18px; }
+          .${req.url.slice(1, -4)} { padding: 16px; }
+        `)
+        return
+      }
+      res.writeHead(200, { 'content-type': 'text/html' })
+      res.end(`<!doctype html>
+        <html lang="en">
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="/style-one.css">
+            <link rel="stylesheet" href="/style-two.css">
+            <link rel="stylesheet" href="/style-three.css">
+          </head>
+          <body><main><h1>Concurrent CSS</h1><p>Useful text</p></main></body>
+        </html>`)
+    })
+
+    try {
+      await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+      const result = await analyzeStaticUrl(`http://127.0.0.1:${server.address().port}`, { maxStylesheets: 2 })
+      assert.equal(result.analysis.mode, 'static')
+      assert.equal(cssRequests, 2)
+      assert.ok(maxActiveCss > 1)
+      assert.ok(result.metrics.colors.length >= 1)
+    } finally {
+      await new Promise((resolve) => server.close(resolve))
+    }
+  })
 })

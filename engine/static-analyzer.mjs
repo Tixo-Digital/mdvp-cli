@@ -79,28 +79,33 @@ async function inlineSameOriginCss(html, baseUrl, opts) {
   if (links.length === 0) return html
 
   const origin = new URL(baseUrl).origin
-  const styles = []
+  const cssUrls = []
   for (const href of links) {
-    let cssUrl
     try {
-      cssUrl = new URL(href, baseUrl)
+      const cssUrl = new URL(href, baseUrl)
+      if (cssUrl.origin === origin) cssUrls.push(cssUrl)
     } catch {
       continue
     }
-    if (cssUrl.origin !== origin) continue
-    try {
-      const response = await fetch(cssUrl, {
-        headers: { 'accept': 'text/css,*/*;q=0.1', 'user-agent': 'mdvp-cli static audit' },
-        signal: AbortSignal.timeout(4000),
-      })
-      if (!response.ok) continue
-      const css = (await response.text()).slice(0, 500_000)
-      styles.push(`/* ${cssUrl.href} */\n${css}`)
-    } catch {}
   }
 
+  const styles = (await Promise.all(cssUrls.map((cssUrl) => fetchStylesheet(cssUrl)))).filter(Boolean)
   if (styles.length === 0) return html
   return `${html}\n<style data-mdvp-static-css>\n${styles.join('\n')}\n</style>`
+}
+
+async function fetchStylesheet(cssUrl) {
+  try {
+    const response = await fetch(cssUrl, {
+      headers: { 'accept': 'text/css,*/*;q=0.1', 'user-agent': 'mdvp-cli static audit' },
+      signal: AbortSignal.timeout(Number(process.env.MDVP_STATIC_CSS_TIMEOUT_MS || 4000)),
+    })
+    if (!response.ok) return null
+    const css = (await response.text()).slice(0, 500_000)
+    return `/* ${cssUrl.href} */\n${css}`
+  } catch {
+    return null
+  }
 }
 
 function runNativeAnalyzer(html, url) {
