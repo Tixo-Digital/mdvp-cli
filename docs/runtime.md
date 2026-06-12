@@ -4,17 +4,17 @@ The performance target is simple: `audit` should feel like a linter. A warm loca
 
 ## Current Decision
 
-Use a fast metrics-only crawler path before introducing a native runtime.
+Use a static analyzer as the default audit path, and reserve the browser crawler for exact or artifact-producing flows.
 
 Rust is the preferred native direction for future CPU-bound runtime work because the scoring engine is deterministic, data-oriented, and a good fit for a small native library or CLI binary. Go is viable for services and orchestration, but Rust is the better first native boundary for a scorer/runtime that may later ship as npm platform binaries.
 
-Do not rewrite the browser crawler first. Chromium startup, page navigation, remote network latency, and JS-rendered page readiness dominate wall-clock time. A Rust or Go wrapper around the same browser waits would still be slow.
+Do not wrap Chromium in Rust or Go and call that the fix. Chromium startup, page navigation, remote network latency, and JS-rendered page readiness dominate wall-clock time. The low-memory win comes from not launching a browser on the default path.
 
 ## No-Chromium Strategy
 
 Do not silently replace the rendered crawler with a fake browser. MDVP currently scores the rendered DOM with browser-computed CSS. That is the correct mode for `perceive`, screenshots, viewport checks, JS-rendered apps, and any result that claims exact computed styles.
 
-The low-memory path should be a separate static audit runtime:
+The low-memory path is a separate static audit runtime:
 
 1. Fetch HTML and same-origin CSS without launching a browser.
 2. Parse HTML with a browser-grade Rust HTML parser.
@@ -24,9 +24,9 @@ The low-memory path should be a separate static audit runtime:
 
 This gives users a cheap default for CI and local iteration without pretending it is equivalent to a real browser crawl.
 
-Recommended modes:
+Modes:
 
-- `audit` / `audit --fast`: current fast metrics-only browser path; later static Rust analyzer when available.
+- `audit` / `audit --fast`: static analyzer, no Chromium.
 - `audit --exact`: rendered DOM audit through the browser path with fast shortcuts disabled.
 - `perceive` and screenshot-producing flows: full browser path.
 
@@ -38,22 +38,15 @@ Rejected shortcuts:
 
 ## What Changed First
 
-Plain local `audit` now uses a metrics-only path when the crawler is invoked with `CRAWL_ONCE_STDOUT=1` and screenshots are not requested:
+Plain local `audit` now uses the static analyzer and returns `source: "static"` with an `analysis` limitations block. The browser crawler is still used by `audit --exact`, `perceive`, screenshots, video, and swarm/public contribution flows.
 
-- no scroll video,
-- no page HTML artifact,
-- no screenshots,
-- no viewport matrix,
-- no temporal analysis,
-- no interaction replay.
-
-Artifact-heavy crawling remains available for submitted jobs and live perception, where screenshots and richer page artifacts are the product.
+Artifact-heavy crawling remains available where screenshots and richer page artifacts are the product.
 
 ## Native Runtime Boundary
 
 The first native boundary should be one of these:
 
-1. **Static analyzer:** Rust binary for fetch + HTML/CSS parsing + safe no-layout scoring. This is the best path to sub-second warm audits and low RAM.
+1. **Static analyzer:** Rust binary for HTML/CSS parsing + safe no-layout scoring. Node owns network fetches; Rust owns metric extraction.
 2. **Scorer library:** port `engine/scorer.mjs`, color science, threshold checks, and signal aggregation to Rust, called from Node or shipped as a native CLI.
 3. **Packed CLI shell:** keep browser crawling in JS/Puppeteer or Playwright for exact mode, but move scoring and output formatting into a native binary after the metrics JSON is captured.
 4. **Later browser replacement:** evaluate browser-control alternatives only after metrics-only audit is fast, because replacing Puppeteer does not remove network and page-render waits.

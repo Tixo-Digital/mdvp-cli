@@ -14,7 +14,7 @@ const commands = [
   { name: 'help', args: ['help'] },
   { name: 'top5', args: ['top', '5'] },
   { name: 'stats-json', args: ['stats', '--json'] },
-  ...(includeAudit ? [{ name: auditExact ? 'audit-exact-json' : 'audit-json', args: ['audit', target, ...(auditExact ? ['--exact'] : []), '--json'] }] : []),
+  ...(includeAudit ? [{ name: auditExact ? 'audit-exact-json' : 'audit-static-json', args: ['audit', target, ...(auditExact ? ['--exact'] : []), '--json'] }] : []),
 ]
 
 const rows = []
@@ -42,7 +42,7 @@ for (const command of commands) {
 const summary = {
   generatedAt: new Date().toISOString(),
   target,
-  auditMode: auditExact ? 'exact' : 'fast',
+  auditMode: auditExact ? 'exact' : 'static',
   rows,
 }
 

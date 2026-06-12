@@ -1,4 +1,5 @@
 node_modules/
 .mdvp/
+native/**/target/
 *.log
 .DS_Store

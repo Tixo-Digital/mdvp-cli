@@ -1,16 +1,16 @@
 # CLI commands
 
-Every command in `@mdvp/cli` v1.32+. `audit` now crawls locally by default (no API key, no credits) and reads the API key from `MDVP_API_KEY` env var or `~/.mdvp/config.json` only when you pass `--cloud`. `submit`, `compare`, `top`, `worst`, `perceive`, and `recrawl` always read the key.
+Every command in `@mdvp/cli` v1.32+. `audit` now runs locally by default (no API key, no credits) and reads the API key from `MDVP_API_KEY` env var or `~/.mdvp/config.json` only when you pass `--cloud`. `submit`, `compare`, `top`, `worst`, `perceive`, and `recrawl` always read the key.
 
 ## Audit
 
 Score a single URL.
 
 ```bash
-# Default since v1.32.0 — fast local crawl, no API key, no credits
+# Default — static local audit, no Chromium, no API key, no credits
 npx @mdvp/cli audit myapp.com
 
-# Exact — keep full browser waits when validating a disputed result
+# Exact — use the rendered browser path when validating a disputed result
 npx @mdvp/cli audit myapp.com --exact
 
 # Cloud — instant lookup from the public dataset (--json/--raw costs 1 credit)
@@ -27,9 +27,9 @@ Flags:
 
 | Flag | What it does |
 |---|---|
-| _(none)_ | Fast local crawl. Default since v1.32.0. |
-| `--exact` | Disable fast local audit shortcuts and keep slower browser waits for a disputed result. |
-| `--fast` | Explicitly request the fast local path. Currently the default. |
+| _(none)_ | Static local audit. Fetches HTML/CSS and does not launch Chromium. |
+| `--exact` | Use the rendered browser path with full waits for disputed results. |
+| `--fast` | Explicitly request the default static path. |
 | `--cloud` | Look up an existing dataset record. `--json`/`--raw` cost 1 credit. |
 | `--swarm` | Local audit + POST the result to the public dataset. |
 | `--check` | Enforce `.mdvprc` thresholds and DESIGN.md spec, exit 1 on violation. Local-only (cannot combine with `--cloud`). |
@@ -38,7 +38,7 @@ Flags:
 | `--raw` | Full dataset row including assets URLs (cloud only) |
 | `--text` | LLM-optimized compact format |
 | `--design=PATH` | Diff against a specific DESIGN.md file |
-| `--timeout=MS` | Navigation timeout for local crawl (default 60000) |
+| `--timeout=MS` | Static fetch timeout; exact mode also uses browser navigation waits |
 | `--no-vision` | Skip VLM analysis on the cloud `perceive` command |
 | `--no-header` | Suppress the ASCII banner in CLI output |
 | `--mdvprc=PATH` | Path to a non-default config file |
@@ -46,7 +46,7 @@ Flags:
 Output (text mode):
 
 ```
-myapp.com  C+  58/100  local crawl
+myapp.com  C+  58/100  static audit
 
   css_health      ████████░░░░  48   32 colors · 4 fonts · 61% on grid
   visual_quality  ██████████░░  67
@@ -60,7 +60,7 @@ Lowest: originality (38) · color (44) · spacing (51)
   · Inter + Tailwind purple-blue palette — common design pattern
 ```
 
-JSON output adds a `source` field (`"local"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from.
+JSON output adds a `source` field (`"static"`, `"local"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from. Static results also include an `analysis` object that names the analyzer and limitations.
 
 ## Init
 
@@ -150,7 +150,7 @@ npx @mdvp/cli hire --tabs=4      # more throughput
 npx @mdvp/cli hire --daemon      # background process
 ```
 
-The `hire` command copies `engine/crawler-worker.mjs` (from this package) into `~/.mdvp/crawler/` and runs it. The same source file also runs when you do `audit` (the local default) or `audit --swarm`.
+The `hire` command copies `engine/crawler-worker.mjs` (from this package) into `~/.mdvp/crawler/` and runs it. The same browser worker is used for `audit --exact`, live perception, screenshot/video flows, and `audit --swarm`; default `audit` uses the static analyzer.
 
 ## MCP
 

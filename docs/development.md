@@ -10,7 +10,7 @@ cd mdvp-cli
 npm ci
 ```
 
-Node 18+ is required. No system dependencies — the engine is pure JS and Puppeteer's Chromium downloads on first `audit --local`.
+Node 18+ is required. Rust is optional for local development but recommended when working on the static analyzer. Puppeteer's Chromium downloads only when you run browser-backed commands such as `audit --exact`, `perceive --live`, or crawler-node flows.
 
 ## Run the tests
 
@@ -34,6 +34,7 @@ commands/              — one file per CLI subcommand
   hire.mjs             — crawler node
   mcp-config.mjs
 engine/                — the scoring engine (also bundled in the npm package)
+  static-analyzer.mjs  — no-Chromium static audit bridge
   crawler-worker.mjs   — Puppeteer orchestration
   extract.js           — page.evaluate(): getComputedStyle on every element
   scorer.mjs           — 12 categories → 4 components
@@ -41,6 +42,7 @@ engine/                — the scoring engine (also bundled in the npm package)
   signals/             — one file per AI-pattern detector (registry)
   thresholds.mjs       — .mdvprc loader
   design-spec.mjs      — DESIGN.md parser + DOM compliance diff
+native/mdvp-static/    — Rust static analyzer
 test/                  — 89 node:test suites
 action/                — composite GitHub Action
 scripts/               — benchmark + correlation scripts

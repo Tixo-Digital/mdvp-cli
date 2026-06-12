@@ -1,6 +1,6 @@
 # Scoring Methodology
 
-MDVP measures design quality through four deterministic pillars applied to live DOM snapshots. No neural network, no trained weights, no GPU required. The same URL crawled twice produces the same score.
+MDVP measures design quality through four deterministic pillars applied to page HTML/CSS metrics. No neural network, no trained weights, no GPU required. The same fetched input produces the same score.
 
 ---
 
@@ -8,15 +8,15 @@ MDVP measures design quality through four deterministic pillars applied to live 
 
 ### Pillar 1 — CSS/DOM metrics (objective counts)
 
-These are raw measurements extracted by `engine/extract.js` via Puppeteer's `page.evaluate()`. They reflect what `getComputedStyle()` returns for every visible element — the actual rendered values, not source CSS.
+These are raw measurements extracted by the static analyzer from HTML and same-origin CSS by default. For `audit --exact`, `engine/extract.js` runs in Puppeteer via `page.evaluate()` and reflects `getComputedStyle()` for visible elements.
 
 | Metric | How extracted | Why it matters |
 |---|---|---|
-| Unique colors | `getComputedStyle(el).color` + `backgroundColor` deduplicated | Color proliferation is the most common symptom of absent design system |
-| Unique font families | `getComputedStyle(el).fontFamily` | > 3 families signals incoherence |
-| Unique font sizes | `getComputedStyle(el).fontSize` | Type scale discipline |
-| Unique border-radius values | `getComputedStyle(el).borderRadius` | Component consistency |
-| Spacing values | `padding*` + `gap` computed values | Grid adherence |
+| Unique colors | CSS colors deduplicated; exact mode uses computed text/background colors | Color proliferation is the most common symptom of absent design system |
+| Unique font families | CSS `font-family`; exact mode uses computed font family | > 3 families signals incoherence |
+| Unique font sizes | CSS `font-size`; exact mode uses computed font size | Type scale discipline |
+| Unique border-radius values | CSS `border-radius`; exact mode uses computed border radius | Component consistency |
+| Spacing values | CSS `padding*` + `gap`; exact mode uses computed values | Grid adherence |
 | Custom properties | `document.styleSheets` → `--*` variable count | Design token adoption |
 | Dark mode | `@media (prefers-color-scheme: dark)` rule presence | Modern a11y |
 | HTML landmarks | `<main>`, `<nav>`, `<header>`, `<footer>`, `<aside>` | Semantic structure |
@@ -111,7 +111,7 @@ The `isUtilitySite()` heuristic (checks for `<table>`, `<input>`, high link dens
 
 ### Pillar 5 — DESIGN.md compliance (optional, spec-relative)
 
-Pillars 1–4 judge a page in the absolute. Pillar 5 is **relative to a declared spec**: if a [`DESIGN.md`](https://github.com/google-labs-code/design.md) file is present, the engine diffs the rendered DOM against it.
+Pillars 1–4 judge a page in the absolute. Pillar 5 is **relative to a declared spec**: if a [`DESIGN.md`](https://github.com/google-labs-code/design.md) file is present, the engine diffs the audited page metrics against it.
 
 DESIGN.md describes a visual identity as YAML front matter — `colors`, `typography`, `rounded`, and `spacing` tokens. `engine/design-spec.mjs` parses that subset (a minimal indentation parser; JSON front matter is also accepted) and normalizes it into matchable sets:
 
@@ -174,16 +174,16 @@ Weights sum to 190, final score = weighted_sum / 190, rounded to integer.
 
 ## Reproducibility
 
-Given the same snapshot (DOM state + computed styles at time T), the engine produces identical output:
+Given the same fetched HTML/CSS, static audit produces identical output. Given the same rendered DOM snapshot, exact audit produces identical output:
 
 ```bash
 # Two runs on cached data produce identical scores
-npx @mdvp/cli audit mysite.com --local --json | jq .overall_score
-npx @mdvp/cli audit mysite.com --local --json | jq .overall_score
+npx @mdvp/cli audit mysite.com --json | jq .overall_score
+npx @mdvp/cli audit mysite.com --json | jq .overall_score
 # → same integer both times
 ```
 
-The only source of variance is the live DOM itself (A/B tests, time-based content, CDN routing). To eliminate this, the crawler takes a single snapshot and scores it — there is no averaging or sampling.
+The only source of variance is the live page itself (A/B tests, time-based content, CDN routing). Static audit fetches once; exact audit takes one browser snapshot. There is no averaging or sampling.
 
 ---
 
