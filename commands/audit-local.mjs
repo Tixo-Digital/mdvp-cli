@@ -82,64 +82,75 @@ async function runCrawlerWorker({ cwd, env, timeoutMs, workerPath }) {
 
 export async function cmdAuditLocal(domain, opts = {}) {
   const { json, raw, text, source = "local" } = opts
-  const { spawn } = await import("child_process")
-  const { existsSync, writeFileSync, mkdirSync } = await import("fs")
-  const dir = `${homedir()}/.mdvp/crawler`
+  const useBrowser = opts.exact || source === "swarm"
+  let outputSource = source
+  let result
 
-  if (!existsSync(`${dir}/crawler-worker.mjs`)) {
-    mkdirSync(dir, { recursive: true })
-    const { copyFileSync } = await import("fs")
-    copyFileSync(CRAWLER_WORKER, `${dir}/crawler-worker.mjs`)
-    copyFileSync(EXTRACT_JS, `${dir}/extract.js`)
-    writeFileSync(`${dir}/package.json`, '{"type":"module","dependencies":{"puppeteer":"*"}}')
+  if (!useBrowser) {
+    process.stderr.write(`${DIM}analyzing https://${domain} statically...${R}\n`)
+    const { analyzeStaticUrl } = await import(`${ENGINE_DIR}/static-analyzer.mjs`)
+    result = await analyzeStaticUrl(`https://${domain}`, opts)
+    outputSource = "static"
   } else {
-    const { copyFileSync } = await import("fs")
-    copyFileSync(CRAWLER_WORKER, `${dir}/crawler-worker.mjs`)
-    copyFileSync(EXTRACT_JS, `${dir}/extract.js`)
-  }
+    const { spawn } = await import("child_process")
+    const { existsSync, writeFileSync, mkdirSync } = await import("fs")
+    const dir = `${homedir()}/.mdvp/crawler`
 
-  if (!existsSync(`${dir}/node_modules/puppeteer`)) {
-    process.stderr.write(`${DIM}installing puppeteer (first run ~30s)...${R}\n`)
-    await new Promise((res, rej) => {
-      const child = spawn("npm", ["install", "--prefer-offline"], { cwd: dir, stdio: "inherit" })
-      child.on("exit", (code) => code === 0 ? res() : rej(new Error(`npm install failed`)))
-    })
-  }
-
-  const isLinux = process.platform === "linux"
-  let chromiumPath = undefined
-  if (isLinux) {
-    const { execSync } = await import("child_process")
-    const candidates = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"]
-    for (const p of candidates) {
-      try { execSync(`test -x ${p}`, { stdio: "ignore" }); chromiumPath = p; break } catch {}
+    if (!existsSync(`${dir}/crawler-worker.mjs`)) {
+      mkdirSync(dir, { recursive: true })
+      const { copyFileSync } = await import("fs")
+      copyFileSync(CRAWLER_WORKER, `${dir}/crawler-worker.mjs`)
+      copyFileSync(EXTRACT_JS, `${dir}/extract.js`)
+      writeFileSync(`${dir}/package.json`, '{"type":"module","dependencies":{"puppeteer":"*"}}')
+    } else {
+      const { copyFileSync } = await import("fs")
+      copyFileSync(CRAWLER_WORKER, `${dir}/crawler-worker.mjs`)
+      copyFileSync(EXTRACT_JS, `${dir}/extract.js`)
     }
-    if (!chromiumPath) {
-      process.stderr.write(`${DIM}installing chromium...${R}\n`)
-      execSync("apt-get install -y chromium-browser 2>/dev/null || snap install chromium 2>/dev/null || true", { stdio: "inherit" })
+
+    if (!existsSync(`${dir}/node_modules/puppeteer`)) {
+      process.stderr.write(`${DIM}installing puppeteer (first run ~30s)...${R}\n`)
+      await new Promise((res, rej) => {
+        const child = spawn("npm", ["install", "--prefer-offline"], { cwd: dir, stdio: "inherit" })
+        child.on("exit", (code) => code === 0 ? res() : rej(new Error(`npm install failed`)))
+      })
+    }
+
+    const isLinux = process.platform === "linux"
+    let chromiumPath = undefined
+    if (isLinux) {
+      const { execSync } = await import("child_process")
+      const candidates = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"]
       for (const p of candidates) {
         try { execSync(`test -x ${p}`, { stdio: "ignore" }); chromiumPath = p; break } catch {}
       }
+      if (!chromiumPath) {
+        process.stderr.write(`${DIM}installing chromium...${R}\n`)
+        execSync("apt-get install -y chromium-browser 2>/dev/null || snap install chromium 2>/dev/null || true", { stdio: "inherit" })
+        for (const p of candidates) {
+          try { execSync(`test -x ${p}`, { stdio: "ignore" }); chromiumPath = p; break } catch {}
+        }
+      }
     }
+
+    process.stderr.write(`${DIM}crawling https://${domain} locally...${R}\n`)
+
+    const timeoutMs = normalizeLocalCrawlTimeout(opts.timeout)
+    result = await runCrawlerWorker({
+      cwd: dir,
+      timeoutMs,
+      workerPath: `${dir}/crawler-worker.mjs`,
+      env: {
+        ...process.env,
+        CRAWL_ONCE: `https://${domain}`,
+        CRAWL_ONCE_STDOUT: "1",
+        CRAWL_ONCE_TIMEOUT_MS: String(timeoutMs),
+        TABS: "1",
+        CRAWL_ONCE_EXACT: "1",
+        ...(chromiumPath ? { PUPPETEER_EXECUTABLE_PATH: chromiumPath } : {}),
+      },
+    })
   }
-
-  process.stderr.write(`${DIM}crawling https://${domain} locally...${R}\n`)
-
-  const timeoutMs = normalizeLocalCrawlTimeout(opts.timeout)
-  const result = await runCrawlerWorker({
-    cwd: dir,
-    timeoutMs,
-    workerPath: `${dir}/crawler-worker.mjs`,
-    env: {
-      ...process.env,
-      CRAWL_ONCE: `https://${domain}`,
-      CRAWL_ONCE_STDOUT: "1",
-      CRAWL_ONCE_TIMEOUT_MS: String(timeoutMs),
-      CRAWL_ONCE_FAST: "1",
-      TABS: "1",
-      ...(chromiumPath ? { PUPPETEER_EXECUTABLE_PATH: chromiumPath } : {}),
-    },
-  })
 
   if (!result || !result.metrics) {
     console.error(`${RED}Crawl failed — no metrics returned${R}`)
@@ -189,7 +200,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
   const payload = {
     id: site.id,
     url: site.url,
-    source,
+    source: outputSource,
     grade: adjustedGrade,
     overall_score: adjustedOverall,
     components,
@@ -202,6 +213,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
     },
     recommendations: score.recommendations,
   }
+  if (result.analysis) payload.analysis = result.analysis
   if (specResult) {
     payload.design_compliance = {
       spec: specResult.summary.spec,
@@ -223,7 +235,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
 
   if (text) { console.log(toTextFormat(site, bd)); return payload }
 
-  console.log(`\n${BOLD}${domain}${R}  ${scoreColor(adjustedOverall)}${adjustedGrade}  ${adjustedOverall}/100${R}  ${DIM}${sourceLabel(source)}${R}\n`)
+  console.log(`\n${BOLD}${domain}${R}  ${scoreColor(adjustedOverall)}${adjustedGrade}  ${adjustedOverall}/100${R}  ${DIM}${sourceLabel(outputSource)}${R}\n`)
   console.log(`  css_health      ${scoreColor(components.css_health.score)}${bar(components.css_health.score)}${R}  ${components.css_health.score}  ${DIM}${components.css_health.unique_colors} colors · ${components.css_health.unique_font_families} fonts · ${components.css_health.spacing_on_grid_pct}% on grid${R}`)
   console.log(`  visual_quality  ${scoreColor(components.visual_quality.score)}${bar(components.visual_quality.score)}${R}  ${components.visual_quality.score}`)
   console.log(`  structure       ${scoreColor(components.structure.score)}${bar(components.structure.score)}${R}  ${components.structure.score}`)

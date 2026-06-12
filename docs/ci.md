@@ -36,7 +36,7 @@ jobs:
           fail_on_violation: 'true'
 ```
 
-The action runs Puppeteer locally on the runner. No screenshot or DOM data sent anywhere. Full reference: [`action/README.md`](../action/README.md).
+The action runs the static analyzer locally on the runner. No screenshot or DOM data is sent anywhere. Full reference: [`action/README.md`](../action/README.md).
 
 ## Configuration: `.mdvprc`
 
@@ -59,7 +59,7 @@ Drop a `.mdvprc` (or `mdvp.config.json`) in your project root. Both formats are 
 
 | Field | Default | Meaning |
 |---|---|---|
-| `max_colors` | 30 | Unique colors in the rendered DOM |
+| `max_colors` | 30 | Unique colors from the audited page metrics |
 | `max_font_families` | 3 | Distinct font families |
 | `max_font_sizes` | 8 | Distinct font sizes |
 | `min_spacing_grid_pct` | 60 | % of spacing values on a 4px grid |
@@ -97,12 +97,12 @@ npx @mdvp/cli audit myapp.com --check
 # exits 0 on pass, exits 1 with violation list on fail
 ```
 
-(`--local` is no longer needed in v1.32.0 — `audit` crawls locally by default. Kept as a deprecated alias so older scripts keep working.)
+(`--local` is no longer needed — `audit` runs locally by default. Kept as a deprecated alias so older scripts keep working.)
 
 ### Example failure
 
 ```
-myapp.com  C  62/100  local crawl — FAIL
+myapp.com  C  62/100  static audit — FAIL
 
   ✗ unique_colors: 32 (limit 20)  [css_health]
   ✗ unique_font_families: 4 (limit 2)  [css_health]

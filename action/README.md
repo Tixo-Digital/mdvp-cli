@@ -106,4 +106,4 @@ Default thresholds are conservative — they catch obvious design health issues 
 
 ## Privacy
 
-The action runs Puppeteer locally on the GitHub Actions runner. No screenshot or DOM data is sent to mdvp.dev.
+The action runs the static analyzer locally on the GitHub Actions runner. No screenshot or DOM data is sent to mdvp.dev.

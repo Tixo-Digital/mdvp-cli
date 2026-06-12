@@ -1,6 +1,6 @@
 # System Architecture
 
-MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler**, a **coordinator** (server), and **storage**. The client, engine, and crawler are in this repository. The coordinator and storage are hosted at `api.mdvp.dev` and are not part of this open-source package — but the protocol between them is documented below, so the engine and crawler are fully usable on their own (`--local`) or against a self-hosted coordinator.
+MDVP has six components: a **client** (CLI), a **static analyzer**, a **scoring engine**, a **crawler**, a **coordinator** (server), and **storage**. The client, static analyzer, engine, and crawler are in this repository. The coordinator and storage are hosted at `api.mdvp.dev` and are not part of this open-source package — but the protocol between them is documented below, so the engine and crawler are fully usable on their own (`audit`, `audit --exact`, or `--local`) or against a self-hosted coordinator.
 
 ---
 
@@ -12,13 +12,14 @@ MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler*
 │                                                              │
 │  CLIENT: @mdvp/cli (npm)          ENGINE: engine/            │
 │  ┌──────────────────┐             ┌──────────────────────┐   │
-│  │ audit  compare   │  uses       │ scorer.mjs           │   │
+│  │ audit  compare   │  uses       │ static-analyzer.mjs  │   │
 │  │ hire   perceive  │────────────>│ color-science.mjs    │   │
 │  │ login  mcp       │             │ signals/*.mjs        │   │
-│  └──────────────────┘             │ thresholds.mjs       │   │
+│  └──────────────────┘             │ scorer.mjs           │   │
 │                                   └──────────────────────┘   │
+│  STATIC: native/mdvp-static (Rust; default audit path)        │
 │  CRAWLER: engine/crawler-worker.mjs + extract.js             │
-│  (Puppeteer; runs locally for --local, or as a swarm node)   │
+│  (Puppeteer; runs for --exact, artifacts, or as a swarm node)│
 └─────────────────────────────────────────────────────────────┘
                         │ HTTP (documented protocol)
                         ▼
@@ -39,7 +40,22 @@ MDVP has five components: a **client** (CLI), a **scoring engine**, a **crawler*
 
 ## Local scoring engine
 
-When you run `npx @mdvp/cli audit mysite.com --local`, everything happens on your machine:
+When you run `npx @mdvp/cli audit mysite.com`, everything happens on your machine:
+
+```
+URL
+ │
+ ▼
+engine/static-analyzer.mjs  — fetches HTML + same-origin CSS
+ │
+ ▼
+native/mdvp-static          — extracts static DOM/CSS metrics without Chromium
+ │
+ ▼
+engine/scorer.mjs           — scores 12 categories, groups into 4 components
+```
+
+When you run `audit --exact`, `perceive --live`, screenshots/video flows, or a swarm crawler, the browser-backed crawler path is used:
 
 ```
 URL
@@ -64,7 +80,7 @@ engine/scorer.mjs           — scores 12 categories, groups into 4 components
  └── engine/thresholds.mjs     — loads .mdvprc, checks violations + signal config
 ```
 
-No network calls. No API key. Bit-identical output for the same DOM snapshot.
+No API key is required. Static output is deterministic for the same fetched HTML/CSS. Exact browser output is deterministic for the same rendered DOM snapshot.
 
 ### Signal registry
 
@@ -199,7 +215,7 @@ These are used by the CLI cloud commands. All require `X-API-Key` except the cra
 
 ## What is not open source
 
-The local engine, CLI, MCP server, and GitHub Action in this repo are MIT-licensed and fully self-contained for `--local` mode. The following are not part of the open-source package and live in a separate codebase:
+The local static analyzer, exact crawler, scoring engine, CLI, MCP server, and GitHub Action in this repo are MIT-licensed and fully self-contained for local audit modes. The following are not part of the open-source package and live in a separate codebase:
 
 - **Hosted coordinator** — the queue, job dispatcher, and rate-limit logic
 - **Storage layer** — the scored site database and the crawl queue
@@ -219,4 +235,4 @@ The hosted service runs on serverless infrastructure. A self-hosted instance tha
 3. A screenshot store (or skip screenshots and serve only scores)
 4. An API-key table for cloud-command authentication
 
-The local CLI (`--local` flag) is a fully self-contained alternative — it runs the entire scoring engine without any hosted infrastructure, and is what `npm install @mdvp/cli` actually does.
+The local CLI is a fully self-contained alternative — default `audit` runs the static analyzer without hosted infrastructure, and `audit --exact` runs the browser-backed crawler locally when rendered evidence is needed.

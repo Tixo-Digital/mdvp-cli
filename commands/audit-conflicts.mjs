@@ -5,7 +5,7 @@ export const AUDIT_FLAG_CONFLICTS = [
   { pair: ["local", "swarm"], msg: "--local is now the default; --local and --swarm cannot be combined" },
 ]
 
-export const AUDIT_SOURCES = ["local", "cloud", "swarm"]
+export const AUDIT_SOURCES = ["static", "local", "cloud", "swarm"]
 
 export function selectAuditSource(opts) {
   if (opts.cloud) return "cloud"

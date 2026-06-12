@@ -82,5 +82,5 @@ Signals are configurable per project via `.mdvprc` — disable one you intention
 ## Next
 
 - [Methodology (full paper)](methodology.md) — 4 pillars, weight table, prior-work comparison
-- [DESIGN.md compliance](design-md.md) — diff your rendered DOM against a declared design system
+- [DESIGN.md compliance](design-md.md) — diff audited page metrics against a declared design system
 - [Benchmark](benchmark.md) — sensitivity/ablation + live reference panel

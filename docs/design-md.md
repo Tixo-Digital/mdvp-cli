@@ -2,10 +2,10 @@
 
 Signals catch *generic* anti-patterns. A [`DESIGN.md`](https://github.com/google-labs-code/design.md) file lets you check the opposite: does the live DOM actually follow **your** design system?
 
-Drop a `DESIGN.md` in your repo (the Google design.md format — YAML front matter with `colors`, `typography`, `rounded`, `spacing` tokens). MDVP picks it up automatically and diffs the rendered page against it:
+Drop a `DESIGN.md` in your repo (the Google design.md format — YAML front matter with `colors`, `typography`, `rounded`, `spacing` tokens). MDVP picks it up automatically and diffs the audited page metrics against it:
 
 ```bash
-npx @mdvp/cli audit myapp.com --local
+npx @mdvp/cli audit myapp.com
 # … normal scores …
 #
 # DESIGN.md (Acme)  3 errors · 2 warnings  −18 from 74
@@ -26,13 +26,13 @@ npx @mdvp/cli audit myapp.com --local
 Without `--check`, spec mismatches apply a soft penalty (capped at −40) to the score. With `--check`, off-palette colors and off-scale fonts become hard violations that exit 1 — so an agent that ignored your `DESIGN.md` fails CI.
 
 ```bash
-npx @mdvp/cli audit myapp.com --local --check   # DESIGN.md errors fail the build
+npx @mdvp/cli audit myapp.com --check   # DESIGN.md errors fail the build
 ```
 
 Point at a non-default path with `--design=path/to/DESIGN.md`:
 
 ```bash
-npx @mdvp/cli audit myapp.com --local --design=docs/DESIGN.md --check
+npx @mdvp/cli audit myapp.com --design=docs/DESIGN.md --check
 ```
 
 ## Example DESIGN.md

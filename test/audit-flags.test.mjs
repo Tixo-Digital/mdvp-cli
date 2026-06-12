@@ -4,8 +4,8 @@ import { AUDIT_FLAG_CONFLICTS, AUDIT_SOURCES, selectAuditSource } from '../comma
 import { checkConflicts } from '../lib/conflicts.mjs'
 
 describe('AUDIT_SOURCES', () => {
-  it('exposes the three valid source kinds', () => {
-    assert.deepEqual(AUDIT_SOURCES, ['local', 'cloud', 'swarm'])
+  it('exposes the valid source kinds', () => {
+    assert.deepEqual(AUDIT_SOURCES, ['static', 'local', 'cloud', 'swarm'])
   })
 })
 

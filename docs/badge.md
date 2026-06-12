@@ -8,11 +8,11 @@ Once a site is in the public dataset, show its current MDVP score with a shields
 # Cloud submit (requires MDVP API key)
 npx @mdvp/cli submit yoursite.com
 
-# Or: crawl locally first, then push the result
-npx @mdvp/cli submit yoursite.com --local
+# Or: run a browser-backed local contribution
+npx @mdvp/cli audit yoursite.com --swarm
 ```
 
-`--local` crawls with Puppeteer on your machine and ships the score to the public dataset — no API key, no credits. A crawler node picks it up for parity scoring if needed; results appear in the dataset within ~60 seconds.
+`audit --swarm` crawls with Puppeteer on your machine and ships the score to the public dataset — no API key, no credits. Default `audit` stays static and does not contribute public dataset rows.
 
 ## Add the badge
 
