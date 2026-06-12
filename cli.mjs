@@ -39,6 +39,7 @@ async function main() {
     githubAction: flags.has("--github-action"),
     url: flagValues.url || null,
     design: flagValues.design || null,  // DESIGN.md path (default: auto-discover in cwd)
+    timeout: flagValues.timeout || null,
     daemon: flags.has("--daemon") || flags.has("-d"),
     tabs: parseInt(flagValues.tabs || "2") || 2,
   }

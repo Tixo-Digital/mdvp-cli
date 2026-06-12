@@ -9,6 +9,76 @@ const __dir = dirname(fileURLToPath(import.meta.url))
 const ENGINE_DIR = join(__dir, '..', 'engine')
 const CRAWLER_WORKER = join(ENGINE_DIR, 'crawler-worker.mjs')
 const EXTRACT_JS = join(ENGINE_DIR, 'extract.js')
+const DEFAULT_LOCAL_CRAWL_TIMEOUT_MS = 60000
+
+function normalizeLocalCrawlTimeout(value, fallback = DEFAULT_LOCAL_CRAWL_TIMEOUT_MS) {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function terminateCrawlerChild(child) {
+  if (!child || child.killed) return
+  try {
+    if (process.platform === 'win32') child.kill('SIGTERM')
+    else process.kill(-child.pid, 'SIGTERM')
+  } catch {
+    try { child.kill('SIGTERM') } catch {}
+  }
+
+  setTimeout(() => {
+    if (child.killed) return
+    try {
+      if (process.platform === 'win32') child.kill('SIGKILL')
+      else process.kill(-child.pid, 'SIGKILL')
+    } catch {
+      try { child.kill('SIGKILL') } catch {}
+    }
+  }, 2000).unref?.()
+}
+
+async function runCrawlerWorker({ cwd, env, timeoutMs, workerPath }) {
+  const { spawn: spawnChild } = await import("child_process")
+  timeoutMs = normalizeLocalCrawlTimeout(timeoutMs)
+  return await new Promise((resolve, reject) => {
+    let settled = false
+    let out = ""
+    let errOut = ""
+    const child = spawnChild("node", [workerPath], {
+      env,
+      cwd,
+      detached: process.platform !== 'win32',
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      terminateCrawlerChild(child)
+      reject(new Error(`local crawl timed out after ${timeoutMs}ms`))
+    }, timeoutMs)
+    timer.unref?.()
+
+    child.stdout.on("data", (d) => (out += d))
+    child.stderr.on("data", (d) => { errOut += d; process.stderr.write(d) })
+    child.on("error", (err) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      reject(err)
+    })
+    child.on("exit", (code, signal) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      if (code !== 0) {
+        reject(new Error(errOut.slice(-300) || `crawler exited with ${signal || code}`))
+        return
+      }
+      try { resolve(JSON.parse(out)) }
+      catch { reject(new Error(errOut.slice(-300) || "crawler returned no data")) }
+    })
+  })
+}
 
 export async function cmdAuditLocal(domain, opts = {}) {
   const { json, raw, text, source = "local" } = opts
@@ -55,24 +125,20 @@ export async function cmdAuditLocal(domain, opts = {}) {
 
   process.stderr.write(`${DIM}crawling https://${domain} locally...${R}\n`)
 
-  const { spawn: spawnChild } = await import("child_process")
-  const result = await new Promise((resolve, reject) => {
-    const env = {
+  const timeoutMs = normalizeLocalCrawlTimeout(opts.timeout)
+  const result = await runCrawlerWorker({
+    cwd: dir,
+    timeoutMs,
+    workerPath: `${dir}/crawler-worker.mjs`,
+    env: {
       ...process.env,
       CRAWL_ONCE: `https://${domain}`,
       CRAWL_ONCE_STDOUT: "1",
+      CRAWL_ONCE_TIMEOUT_MS: String(timeoutMs),
+      CRAWL_ONCE_FAST: "1",
       TABS: "1",
       ...(chromiumPath ? { PUPPETEER_EXECUTABLE_PATH: chromiumPath } : {}),
-    }
-    const child = spawnChild("node", [`${dir}/crawler-worker.mjs`], { env, cwd: dir, stdio: ["ignore", "pipe", "pipe"] })
-    let out = ""
-    let errOut = ""
-    child.stdout.on("data", (d) => (out += d))
-    child.stderr.on("data", (d) => { errOut += d; process.stderr.write(d) })
-    child.on("exit", () => {
-      try { resolve(JSON.parse(out)) }
-      catch { reject(new Error(errOut.slice(-300) || "crawler returned no data")) }
-    })
+    },
   })
 
   if (!result || !result.metrics) {
@@ -199,3 +265,5 @@ export async function cmdAuditLocal(domain, opts = {}) {
 
   return payload
 }
+
+export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, normalizeLocalCrawlTimeout, runCrawlerWorker, terminateCrawlerChild }

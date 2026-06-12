@@ -33,7 +33,7 @@ Flags:
 | `--raw` | Full dataset row including assets URLs (cloud only) |
 | `--text` | LLM-optimized compact format |
 | `--design=PATH` | Diff against a specific DESIGN.md file |
-| `--timeout=MS` | Navigation timeout for local crawl (default 60000) |
+| `--timeout=MS` | Overall timeout for the local crawler child process (default 60000) |
 | `--no-vision` | Skip VLM analysis on the cloud `perceive` command |
 | `--no-header` | Suppress the ASCII banner in CLI output |
 | `--mdvprc=PATH` | Path to a non-default config file |
