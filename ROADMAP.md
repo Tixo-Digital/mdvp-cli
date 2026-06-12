@@ -11,7 +11,6 @@ Public open-source CLI surface only (`@mdvp/cli`). Hosted API infrastructure is 
 
 - **Badge generator** — `npx @mdvp/cli badge mysite.com` → markdown badge for README
 - **Watch mode** — `npx @mdvp/cli watch myapp.com --local` — re-scores on file changes during development
-- **Diff command** — `npx @mdvp/cli diff before.json after.json` — compare two JSON snapshots
 - **More vibe-code signals** — expand originality detection as new AI tools emerge (Figma AI, Webflow AI, etc.)
 - **MCP resources** — expose score history and dataset entries as MCP resources
 

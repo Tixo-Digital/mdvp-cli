@@ -93,6 +93,19 @@ npx @mdvp/cli compare figma.com linear.app
 npx @mdvp/cli compare figma.com linear.app --json
 ```
 
+## Diff
+
+Compare two saved audit JSON snapshots without crawling or calling the API:
+
+```bash
+npx @mdvp/cli audit https://preview.example.com --json > before.json
+npx @mdvp/cli audit https://preview.example.com --json > after.json
+npx @mdvp/cli diff before.json after.json
+npx @mdvp/cli diff before.json after.json --json
+```
+
+The command reads local files only. Text output reports overall, component, and category score deltas; `--json` returns `before`, `after`, `delta`, `summary`, `changes`, and `changed` fields for scripts. Successful comparisons exit 0 and do not enforce thresholds. Missing files, malformed JSON, and files without MDVP score data exit 3.
+
 ## Top / worst
 
 Dataset leaderboard.
