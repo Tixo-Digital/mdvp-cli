@@ -8,13 +8,19 @@ const args = process.argv.slice(2)
 const target = args.find((arg) => !arg.startsWith('--')) || 'mdvp.dev'
 const includeAudit = !args.includes('--no-audit')
 const includeMemory = args.includes('--memory')
-const auditExact = args.includes('--exact') || args.includes('--audit-exact')
+const auditFast = args.includes('--fast') || args.includes('--audit-fast')
+const auditExact = args.includes('--exact') || args.includes('--audit-exact') || !auditFast
+const auditMode = auditFast ? 'static-cache' : 'exact'
 
 const commands = [
   { name: 'help', args: ['help'] },
   { name: 'top5', args: ['top', '5'] },
   { name: 'stats-json', args: ['stats', '--json'] },
-  ...(includeAudit ? [{ name: auditExact ? 'audit-exact-json' : 'audit-static-json', args: ['audit', target, ...(auditExact ? ['--exact'] : []), '--json'] }] : []),
+  ...(includeAudit ? [{
+    name: auditFast ? 'audit-static-json' : 'audit-exact-json',
+    args: ['audit', target, ...(auditFast ? ['--fast'] : ['--exact']), '--json'],
+    env: auditFast ? { ...process.env, MDVP_USE_CACHE: process.env.MDVP_USE_CACHE || '1' } : process.env,
+  }] : []),
 ]
 
 const rows = []
@@ -25,6 +31,7 @@ for (const command of commands) {
   const result = spawnSync(timed.command, timed.args, {
     encoding: 'utf8',
     maxBuffer: 32 * 1024 * 1024,
+    env: command.env ?? process.env,
   })
   const durationMs = Math.round(performance.now() - started)
   const maxRssKb = parseMaxRssKb(result.stderr, timed.parser)
@@ -42,7 +49,7 @@ for (const command of commands) {
 const summary = {
   generatedAt: new Date().toISOString(),
   target,
-  auditMode: auditExact ? 'exact' : 'static',
+  auditMode,
   rows,
 }
 

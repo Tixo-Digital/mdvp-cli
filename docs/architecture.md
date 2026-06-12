@@ -1,6 +1,6 @@
 # System Architecture
 
-MDVP has six components: a **client** (CLI), a **static analyzer**, a **scoring engine**, a **crawler**, a **coordinator** (server), and **storage**. The client, static analyzer, engine, and crawler are in this repository. The coordinator and storage are hosted at `api.mdvp.dev` and are not part of this open-source package — but the protocol between them is documented below, so the engine and crawler are fully usable on their own (`audit`, `audit --exact`, or `--local`) or against a self-hosted coordinator.
+MDVP has six components: a **client** (CLI), a **static analyzer**, a **scoring engine**, a **crawler**, a **coordinator** (server), and **storage**. The client, static analyzer, engine, and crawler are in this repository. The coordinator and storage are hosted at `api.mdvp.dev` and are not part of this open-source package — but the protocol between them is documented below, so the engine and crawler are fully usable on their own (`audit`, `audit --exact`, `MDVP_USE_CACHE=1 audit --fast`, or `--local`) or against a self-hosted coordinator.
 
 ---
 
@@ -17,9 +17,9 @@ MDVP has six components: a **client** (CLI), a **static analyzer**, a **scoring 
 │  │ login  mcp       │             │ signals/*.mjs        │   │
 │  └──────────────────┘             │ scorer.mjs           │   │
 │                                   └──────────────────────┘   │
-│  STATIC: native/mdvp-static (Rust; default audit path)        │
+│  STATIC: native/mdvp-static (Rust; opt-in cache/fast path)    │
 │  CRAWLER: engine/crawler-worker.mjs + extract.js             │
-│  (Puppeteer; runs for --exact, artifacts, or as a swarm node)│
+│  (Puppeteer; runs for default audit, artifacts, or swarm)     │
 └─────────────────────────────────────────────────────────────┘
                         │ HTTP (documented protocol)
                         ▼
@@ -40,7 +40,7 @@ MDVP has six components: a **client** (CLI), a **static analyzer**, a **scoring 
 
 ## Local scoring engine
 
-When you run `npx @mdvp/cli audit mysite.com`, everything happens on your machine:
+When you run `MDVP_USE_CACHE=1 npx @mdvp/cli audit mysite.com --fast`, the static/cache shortcut happens on your machine without Chromium:
 
 ```
 URL
@@ -55,7 +55,7 @@ native/mdvp-static          — extracts static DOM/CSS metrics without Chromium
 engine/scorer.mjs           — scores 12 categories, groups into 4 components
 ```
 
-When you run `audit --exact`, `perceive --live`, screenshots/video flows, or a swarm crawler, the browser-backed crawler path is used:
+When you run default `audit`, `audit --exact`, `perceive --live`, screenshots/video flows, or a swarm crawler, the browser-backed crawler path is used:
 
 ```
 URL
@@ -235,4 +235,4 @@ The hosted service runs on serverless infrastructure. A self-hosted instance tha
 3. A screenshot store (or skip screenshots and serve only scores)
 4. An API-key table for cloud-command authentication
 
-The local CLI is a fully self-contained alternative — default `audit` runs the static analyzer without hosted infrastructure, and `audit --exact` runs the browser-backed crawler locally when rendered evidence is needed.
+The local CLI is a fully self-contained alternative — default `audit` runs the browser-backed crawler locally for rendered evidence, and `MDVP_USE_CACHE=1 audit --fast` runs the static analyzer without hosted infrastructure when you explicitly accept approximate shortcut output.

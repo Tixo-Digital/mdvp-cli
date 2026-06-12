@@ -1,20 +1,20 @@
 # Runtime Direction
 
-The performance target is simple: `audit` should feel like a linter. A warm local audit should be close to one second on simple or already-cached pages, and slow pages should make the bottleneck obvious.
+The product target is simple: `audit` should be trustworthy by default. A warm local audit should still be fast, but the command a developer runs first must represent the rendered page rather than an approximate shortcut.
 
 ## Current Decision
 
-Use a static analyzer as the default audit path, and reserve the browser crawler for exact or artifact-producing flows.
+Use the browser-backed exact audit as the default path. Keep the static analyzer as an explicit static/cache shortcut that requires `MDVP_USE_CACHE=1`, so approximate values are never used accidentally.
 
 Rust is the preferred native direction for future CPU-bound runtime work because the scoring engine is deterministic, data-oriented, and a good fit for a small native library or CLI binary. Go is viable for services and orchestration, but Rust is the better first native boundary for a scorer/runtime that may later ship as npm platform binaries.
 
-Do not wrap Chromium in Rust or Go and call that the fix. Chromium startup, page navigation, remote network latency, and JS-rendered page readiness dominate wall-clock time. The low-memory win comes from not launching a browser on the default path.
+Do not wrap Chromium in Rust or Go and call that the fix. Chromium startup, page navigation, remote network latency, and JS-rendered page readiness dominate wall-clock time. The low-memory win comes from the static shortcut, but that shortcut is opt-in because it is not equivalent to rendered evidence.
 
 ## No-Chromium Strategy
 
 Do not silently replace the rendered crawler with a fake browser. MDVP currently scores the rendered DOM with browser-computed CSS. That is the correct mode for `perceive`, screenshots, viewport checks, JS-rendered apps, and any result that claims exact computed styles.
 
-The low-memory path is a separate static audit runtime:
+The low-memory path is a separate static audit runtime selected by `MDVP_USE_CACHE=1`. In scripts, add `--fast` as a visible marker of that opt-in:
 
 1. Fetch HTML and same-origin CSS without launching a browser.
 2. Parse HTML with a browser-grade Rust HTML parser.
@@ -22,12 +22,13 @@ The low-memory path is a separate static audit runtime:
 4. Score design-system signals that are safe without layout: tokens, font declarations, color systems, radius/spacing scales, utility-class density, framework fingerprints, metadata, and selector complexity.
 5. Return the same top-level audit shape with `source: "static"` and a confidence field, while marking unavailable rendered-only dimensions as limited.
 
-This gives users a cheap default for CI and local iteration without pretending it is equivalent to a real browser crawl.
+This gives users a cheap path for CI and local iteration without pretending it is equivalent to a real browser crawl.
 
 Modes:
 
-- `audit` / `audit --fast`: static analyzer, no Chromium.
-- `audit --exact`: rendered DOM audit through the browser path with fast shortcuts disabled.
+- `audit`: rendered DOM audit through the browser path.
+- `audit --exact`: explicit alias for the default rendered DOM audit.
+- `MDVP_USE_CACHE=1 audit --fast`: static/cache shortcut, no Chromium.
 - `perceive` and screenshot-producing flows: full browser path.
 
 Rejected shortcuts:
@@ -38,7 +39,7 @@ Rejected shortcuts:
 
 ## What Changed First
 
-Plain local `audit` now uses the static analyzer and returns `source: "static"` with an `analysis` limitations block. The browser crawler is still used by `audit --exact`, `perceive`, screenshots, video, and swarm/public contribution flows.
+Plain local `audit` now uses the browser crawler and returns `source: "local"`. `audit --exact` is kept as a compatibility alias for scripts that want to state the runtime explicitly. Static/cache shortcut mode requires `MDVP_USE_CACHE=1` and returns `source: "static"` with an `analysis` limitations block; use `--fast` alongside the env var in scripts so the shortcut is obvious in logs. The browser crawler is also used by `perceive`, screenshots, video, and swarm/public contribution flows.
 
 Artifact-heavy crawling remains available where screenshots and richer page artifacts are the product.
 
@@ -64,9 +65,9 @@ Run:
 
 ```bash
 node scripts/measure-audit-perf.mjs mdvp.dev
-node scripts/measure-audit-perf.mjs mdvp.dev --exact --memory
+node scripts/measure-audit-perf.mjs mdvp.dev --fast --memory
 ```
 
-The script reports `help`, `top 5`, `stats --json`, and warm local `audit --json` timings. Add `--memory` to capture peak RSS on platforms with `/usr/bin/time`.
+The script reports `help`, `top 5`, `stats --json`, and warm local `audit --json` timings. Default measurement is exact/browser-backed. Add `--fast` to measure the static/cache shortcut; the script sets `MDVP_USE_CACHE=1` for that command. Add `--memory` to capture peak RSS on platforms with `/usr/bin/time`.
 
 Use it before and after runtime changes, and publish both latency and memory results in performance PRs.

@@ -10,7 +10,7 @@ cd mdvp-cli
 npm ci
 ```
 
-Node 18+ is required. Rust is optional but recommended when working on the static analyzer. Default audits do not need Chromium; browser-backed commands such as `audit --exact`, `perceive --live`, screenshots, video, and crawler-node flows use Puppeteer and need a Chromium binary.
+Node 18+ is required. Default audits are browser-backed and use Puppeteer, so a Chromium-compatible browser is needed for full smoke testing. Rust is optional but recommended when working on the static analyzer; that analyzer is used by the opt-in `MDVP_USE_CACHE=1 audit --fast` shortcut.
 
 ## Cloud Codex / Devbox
 

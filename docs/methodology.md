@@ -1,6 +1,6 @@
 # Scoring Methodology
 
-MDVP measures design quality through four deterministic pillars applied to page HTML/CSS metrics. No neural network, no trained weights, no GPU required. The same fetched input produces the same score.
+MDVP measures design quality through four deterministic pillars applied to page HTML/CSS metrics. No neural network, no trained weights, no GPU required. The same rendered browser snapshot produces the same score.
 
 ---
 
@@ -8,7 +8,7 @@ MDVP measures design quality through four deterministic pillars applied to page 
 
 ### Pillar 1 — CSS/DOM metrics (objective counts)
 
-These are raw measurements extracted by the static analyzer from HTML and same-origin CSS by default. For `audit --exact`, `engine/extract.js` runs in Puppeteer via `page.evaluate()` and reflects `getComputedStyle()` for visible elements.
+These are raw measurements extracted from the rendered DOM by default. `engine/extract.js` runs in Puppeteer via `page.evaluate()` and reflects `getComputedStyle()` for visible elements. When `MDVP_USE_CACHE=1 audit --fast` is used, the static analyzer extracts the closest safe subset from HTML and same-origin CSS and marks the result as approximate.
 
 | Metric | How extracted | Why it matters |
 |---|---|---|
@@ -23,7 +23,7 @@ These are raw measurements extracted by the static analyzer from HTML and same-o
 | Image alt coverage | `img[alt]` / total `img` | Accessibility completeness |
 | Heading hierarchy | H1–H6 counts | Document structure |
 
-These counts are **entirely objective** — there is no model calibration and no subjective judgment. They are exactly as defensible as a linter rule.
+These counts are **entirely objective** — there is no model calibration and no subjective judgment. Rendered audit counts are browser-backed; static/cache shortcut counts are limited to fetched HTML/CSS and are marked with an `analysis.limitations` block.
 
 ### Pillar 2 — Perceptual color science (published algorithms)
 
@@ -174,16 +174,16 @@ Weights sum to 190, final score = weighted_sum / 190, rounded to integer.
 
 ## Reproducibility
 
-Given the same fetched HTML/CSS, static audit produces identical output. Given the same rendered DOM snapshot, exact audit produces identical output:
+Given the same rendered DOM snapshot, default exact audit produces identical output. Given the same fetched HTML/CSS, the `MDVP_USE_CACHE=1 --fast` static/cache shortcut produces identical output:
 
 ```bash
-# Two runs on cached data produce identical scores
+# Two exact runs on the same rendered DOM snapshot produce identical scores
 npx @mdvp/cli audit mysite.com --json | jq .overall_score
 npx @mdvp/cli audit mysite.com --json | jq .overall_score
 # → same integer both times
 ```
 
-The only source of variance is the live page itself (A/B tests, time-based content, CDN routing). Static audit fetches once; exact audit takes one browser snapshot. There is no averaging or sampling.
+The only source of variance is the live page itself (A/B tests, time-based content, CDN routing). Default exact audit takes one browser snapshot. Static/cache shortcut mode fetches once. There is no averaging or sampling.
 
 ---
 

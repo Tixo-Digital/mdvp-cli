@@ -11,6 +11,31 @@ const CRAWLER_WORKER = join(ENGINE_DIR, 'crawler-worker.mjs')
 const EXTRACT_JS = join(ENGINE_DIR, 'extract.js')
 const DEFAULT_LOCAL_CRAWL_TIMEOUT_MS = 60000
 
+function envFlag(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value ?? '').trim().toLowerCase())
+}
+
+function cacheShortcutsEnabled(env = process.env) {
+  return envFlag(env.MDVP_USE_CACHE)
+}
+
+function resolveLocalAuditRuntime(opts = {}, env = process.env) {
+  const source = opts.source ?? 'local'
+  if (source === 'swarm') return { mode: 'browser', reason: 'swarm contribution' }
+  if (opts.exact) return { mode: 'browser', reason: 'exact flag' }
+
+  const cacheEnabled = cacheShortcutsEnabled(env)
+  if (opts.fast && !cacheEnabled) {
+    return {
+      mode: 'error',
+      message: '--fast uses the approximate static/cache shortcut. Set MDVP_USE_CACHE=1 to opt in, or omit --fast to run the default exact browser audit.',
+    }
+  }
+
+  if (cacheEnabled) return { mode: 'static', reason: opts.fast ? 'fast cache shortcut' : 'MDVP_USE_CACHE' }
+  return { mode: 'browser', reason: 'default exact audit' }
+}
+
 function normalizeLocalCrawlTimeout(value, fallback = DEFAULT_LOCAL_CRAWL_TIMEOUT_MS) {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
@@ -82,12 +107,17 @@ async function runCrawlerWorker({ cwd, env, timeoutMs, workerPath }) {
 
 export async function cmdAuditLocal(domain, opts = {}) {
   const { json, raw, text, source = "local" } = opts
-  const useBrowser = opts.exact || source === "swarm"
+  const runtime = resolveLocalAuditRuntime({ ...opts, source })
+  if (runtime.mode === 'error') {
+    console.error(`${RED}${runtime.message}${R}`)
+    process.exit(1)
+  }
+  const useBrowser = runtime.mode === 'browser'
   let outputSource = source
   let result
 
   if (!useBrowser) {
-    process.stderr.write(`${DIM}analyzing https://${domain} statically...${R}\n`)
+    process.stderr.write(`${DIM}analyzing https://${domain} with static/cache shortcut...${R}\n`)
     const { analyzeStaticUrl } = await import(`${ENGINE_DIR}/static-analyzer.mjs`)
     result = await analyzeStaticUrl(`https://${domain}`, opts)
     outputSource = "static"
@@ -278,4 +308,4 @@ export async function cmdAuditLocal(domain, opts = {}) {
   return payload
 }
 
-export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, normalizeLocalCrawlTimeout, runCrawlerWorker, terminateCrawlerChild }
+export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }
