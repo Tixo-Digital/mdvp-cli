@@ -14,7 +14,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**DOM analysis for any live URL.** Counts, ratios, and a pattern registry for the rendered HTML. Runs locally via Puppeteer — no API key, no account, no baseline needed.
+**DOM analysis for any live URL.** Counts, ratios, and a pattern registry for the rendered HTML. Runs locally with a fast browser metrics path — no API key, no account, no baseline needed.
 
 ```bash
 npx @mdvp/cli audit myapp.com
@@ -39,6 +39,9 @@ MDVP gives you numbers on the rendered DOM. It instruments the page, extracts co
 ```bash
 # Score any URL locally (first run downloads Puppeteer's Chromium, ~30s)
 npx @mdvp/cli audit myapp.com
+
+# Use slower full browser waits when validating a disputed result
+npx @mdvp/cli audit myapp.com --exact
 
 # Enforce thresholds in CI — exits 1 on violation
 npx @mdvp/cli audit myapp.com --check

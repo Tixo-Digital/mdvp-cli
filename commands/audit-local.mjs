@@ -62,6 +62,8 @@ export async function cmdAuditLocal(domain, opts = {}) {
       CRAWL_ONCE: `https://${domain}`,
       CRAWL_ONCE_STDOUT: "1",
       TABS: "1",
+      ...(opts.exact ? { CRAWL_ONCE_EXACT: "1" } : {}),
+      ...(opts.fast ? { CRAWL_ONCE_FAST: "1" } : {}),
       ...(chromiumPath ? { PUPPETEER_EXECUTABLE_PATH: chromiumPath } : {}),
     }
     const child = spawnChild("node", [`${dir}/crawler-worker.mjs`], { env, cwd: dir, stdio: ["ignore", "pipe", "pipe"] })

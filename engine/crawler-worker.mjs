@@ -146,7 +146,9 @@ async function extractCSSDesignDNA(page) {
   }
 }
 
-async function crawlUrl(browser, url) {
+async function crawlUrl(browser, url, options = {}) {
+  const artifacts = options.artifacts !== false
+  const fast = options.fast === true || !artifacts
   const page = await browser.newPage()
   page.setDefaultTimeout(20000)
   const consoleMessages = []
@@ -161,6 +163,18 @@ async function crawlUrl(browser, url) {
   try {
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 })
 
+    if (fast) {
+      await page.setRequestInterception(true)
+      page.on('request', (request) => {
+        const type = request.resourceType()
+        if (type === 'image' || type === 'media' || type === 'font') {
+          request.abort().catch(() => {})
+        } else {
+          request.continue().catch(() => {})
+        }
+      })
+    }
+
     const cdpClient = await page.createCDPSession()
     await cdpClient.send('DOM.enable')
     await cdpClient.send('CSS.enable')
@@ -169,33 +183,43 @@ async function crawlUrl(browser, url) {
       if (e.header.origin !== 'injected') styleSheetIds.push(e.header.styleSheetId)
     })
 
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 }).catch(() =>
-      page.goto(url, { waitUntil: 'load', timeout: 15000 }).catch(() => {})
-    )
+    if (fast) {
+      const timeout = parseInt(process.env.CRAWL_FAST_TIMEOUT_MS || '6000')
+      const settle = parseInt(process.env.CRAWL_FAST_SETTLE_MS || '150')
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout }).catch(() =>
+        page.goto(url, { waitUntil: 'load', timeout }).catch(() => {})
+      )
+      await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))).catch(() => {})
+      if (settle > 0) await new Promise(r => setTimeout(r, settle))
+    } else {
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 }).catch(() =>
+        page.goto(url, { waitUntil: 'load', timeout: 15000 }).catch(() => {})
+      )
 
-    // Wait for JS-rendered content: CSS vars, dark mode toggle, animations, canvas/WebGL
-    // Sample body bg color twice — if it changed between samples, JS is still mutating styles
-    await new Promise(r => setTimeout(r, 1500))
-    const bgSample1 = await page.evaluate(() => {
-      return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
-             getComputedStyle(document.body).backgroundColor ||
-             'rgb(255,255,255)'
-    }).catch(() => '')
+      // Wait for JS-rendered content: CSS vars, dark mode toggle, animations, canvas/WebGL
+      // Sample body bg color twice — if it changed between samples, JS is still mutating styles
+      await new Promise(r => setTimeout(r, 1500))
+      const bgSample1 = await page.evaluate(() => {
+        return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
+               getComputedStyle(document.body).backgroundColor ||
+               'rgb(255,255,255)'
+      }).catch(() => '')
 
-    await new Promise(r => setTimeout(r, 1500))
-    const bgSample2 = await page.evaluate(() => {
-      return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
-             getComputedStyle(document.body).backgroundColor ||
-             'rgb(255,255,255)'
-    }).catch(() => '')
+      await new Promise(r => setTimeout(r, 1500))
+      const bgSample2 = await page.evaluate(() => {
+        return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
+               getComputedStyle(document.body).backgroundColor ||
+               'rgb(255,255,255)'
+      }).catch(() => '')
 
-    // If background is still changing — wait longer (JS dark mode, animations)
-    if (bgSample1 !== bgSample2) {
-      await new Promise(r => setTimeout(r, 2000))
+      // If background is still changing — wait longer (JS dark mode, animations)
+      if (bgSample1 !== bgSample2) {
+        await new Promise(r => setTimeout(r, 2000))
+      }
+
+      // Hook into rAF to ensure we sample after paint completes
+      await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))).catch(() => {})
     }
-
-    // Hook into rAF to ensure we sample after paint completes
-    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))).catch(() => {})
 
     let rawCSS = ''
     const MAX_CSS = 2_000_000
@@ -230,16 +254,20 @@ async function crawlUrl(browser, url) {
     })() : null
 
     const elCount = await page.evaluate('document.querySelectorAll("*").length').catch(() => 0)
-    if (elCount < 100) await new Promise(r => setTimeout(r, 4000))
+    if (!fast && elCount < 100) await new Promise(r => setTimeout(r, 4000))
 
     // Scroll to top and ensure full paint before DOM sampling
     await page.evaluate('window.scrollTo(0,0)').catch(() => {})
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))).catch(() => {})
 
-    const [metrics, htmlContent, videoResult] = await Promise.all([
-      page.evaluate(EXTRACT_SCRIPT).catch(() => null),
-      page.content().catch(() => null),
-      (async () => {
+    let metrics = null
+    let htmlContent = null
+    let videoResult = null
+    if (artifacts) {
+      ;[metrics, htmlContent, videoResult] = await Promise.all([
+        page.evaluate(EXTRACT_SCRIPT).catch(() => null),
+        page.content().catch(() => null),
+        (async () => {
         const vp = `/tmp/v_${Date.now()}_${Math.random().toString(36).slice(2, 5)}.webm`
         try {
           const rec = await page.screencast({ path: vp })
@@ -259,8 +287,11 @@ async function crawlUrl(browser, url) {
           if (existsSync(vp)) { const b = readFileSync(vp).toString('base64'); unlinkSync(vp); return b }
         } catch { try { unlinkSync(vp) } catch {} }
         return null
-      })(),
-    ])
+        })(),
+      ])
+    } else {
+      metrics = await page.evaluate(EXTRACT_SCRIPT).catch(() => null)
+    }
 
     if (!metrics) throw new Error('No metrics')
 
@@ -293,6 +324,12 @@ async function crawlUrl(browser, url) {
       metrics.hasLovable = generatorInfo.hasLovable
       metrics.hasV0 = generatorInfo.hasV0
       metrics.twCustomProps = generatorInfo.twCustomProps
+    }
+
+    if (!artifacts) {
+      metrics.consoleErrors = consoleMessages.filter(m => m.type === 'error').length
+      metrics.consoleWarnings = consoleMessages.filter(m => m.type === 'warning').length
+      return { success: true, metrics, screenshots: {}, video: null, html: null, network: networkRequests }
     }
 
     const screenshots = {}
@@ -1302,12 +1339,17 @@ async function main() {
 
   if (CRAWL_ONCE) {
     const stdoutMode = process.env.CRAWL_ONCE_STDOUT === '1'
+    const exactMode = process.env.CRAWL_ONCE_EXACT === '1'
+    const forceFast = process.env.CRAWL_ONCE_FAST === '1'
     process.stderr.write(`[${NODE_ID}] launching browser...\n`)
     const browser = await ensureBrowser(browserState)
     try {
-      const result = await crawlUrl(browser, CRAWL_ONCE)
+      const includeScreenshots = process.env.CRAWL_ONCE_SCREENSHOTS === '1'
+      const result = await crawlUrl(browser, CRAWL_ONCE, {
+        artifacts: !stdoutMode || includeScreenshots,
+        fast: !exactMode && (forceFast || (stdoutMode && !includeScreenshots)),
+      })
       if (stdoutMode) {
-        const includeScreenshots = process.env.CRAWL_ONCE_SCREENSHOTS === '1'
         process.stdout.write(JSON.stringify({
           metrics: result.metrics,
           ...(includeScreenshots ? { screenshots: result.screenshots } : {})

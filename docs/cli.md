@@ -7,8 +7,11 @@ Every command in `@mdvp/cli` v1.32+. `audit` now crawls locally by default (no A
 Score a single URL.
 
 ```bash
-# Default since v1.32.0 — local Puppeteer crawl, no API key, no credits
+# Default since v1.32.0 — fast local crawl, no API key, no credits
 npx @mdvp/cli audit myapp.com
+
+# Exact — keep full browser waits when validating a disputed result
+npx @mdvp/cli audit myapp.com --exact
 
 # Cloud — instant lookup from the public dataset (--json/--raw costs 1 credit)
 npx @mdvp/cli audit myapp.com --cloud
@@ -24,7 +27,9 @@ Flags:
 
 | Flag | What it does |
 |---|---|
-| _(none)_ | Local Puppeteer crawl. Default since v1.32.0. |
+| _(none)_ | Fast local crawl. Default since v1.32.0. |
+| `--exact` | Disable fast local audit shortcuts and keep slower browser waits for a disputed result. |
+| `--fast` | Explicitly request the fast local path. Currently the default. |
 | `--cloud` | Look up an existing dataset record. `--json`/`--raw` cost 1 credit. |
 | `--swarm` | Local audit + POST the result to the public dataset. |
 | `--check` | Enforce `.mdvprc` thresholds and DESIGN.md spec, exit 1 on violation. Local-only (cannot combine with `--cloud`). |

@@ -1,0 +1,28 @@
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+
+const src = readFileSync(new URL('../engine/crawler-worker.mjs', import.meta.url), 'utf8')
+
+describe('crawler fast audit path', () => {
+  it('keeps CRAWL_ONCE_STDOUT on a metrics-only fast path by default', () => {
+    assert.match(src, /async function crawlUrl\(browser, url, options = \{\}\)/)
+    assert.match(src, /const artifacts = options\.artifacts !== false/)
+    assert.match(src, /const fast = options\.fast === true \|\| !artifacts/)
+    assert.match(src, /artifacts:\s*!stdoutMode \|\| includeScreenshots/)
+    assert.match(src, /fast:\s*!exactMode && \(forceFast \|\| \(stdoutMode && !includeScreenshots\)\)/)
+  })
+
+  it('does not run video, page html, or screenshots when artifacts are disabled', () => {
+    assert.match(src, /if \(artifacts\) \{[\s\S]*page\.content\(\)[\s\S]*page\.screencast/m)
+    assert.match(src, /if \(!artifacts\) \{[\s\S]*screenshots: \{\}[\s\S]*video: null[\s\S]*html: null/m)
+    assert.match(src, /if \(!fast && elCount < 100\)/)
+  })
+
+  it('keeps screenshot capture available only for artifact-producing crawls', () => {
+    assert.match(src, /const includeScreenshots = process\.env\.CRAWL_ONCE_SCREENSHOTS === '1'/)
+    assert.match(src, /const exactMode = process\.env\.CRAWL_ONCE_EXACT === '1'/)
+    assert.match(src, /const forceFast = process\.env\.CRAWL_ONCE_FAST === '1'/)
+    assert.match(src, /\.\.\.\(includeScreenshots \? \{ screenshots: result\.screenshots \} : \{\}\)/)
+  })
+})
