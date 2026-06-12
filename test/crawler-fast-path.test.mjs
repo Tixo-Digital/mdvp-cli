@@ -21,10 +21,15 @@ describe('crawler fast audit path', () => {
   })
 
   it('keeps metrics-only exact waits shorter than artifact-producing crawls', () => {
-    assert.match(src, /CRAWL_EXACT_STYLE_SETTLE_MS'[\s\S]*artifacts \? 1500 : 350/)
-    assert.match(src, /CRAWL_EXACT_MUTATION_SETTLE_MS'[\s\S]*artifacts \? 2000 : 700/)
-    assert.match(src, /CRAWL_EXACT_SPARSE_DOM_WAIT_MS'[\s\S]*artifacts \? 4000 : 700/)
+    assert.match(src, /CRAWL_EXACT_STYLE_SETTLE_MS'[\s\S]*artifacts \? 1500 : 150/)
+    assert.match(src, /CRAWL_EXACT_MUTATION_SETTLE_MS'[\s\S]*artifacts \? 2000 : 400/)
+    assert.match(src, /CRAWL_EXACT_SPARSE_DOM_WAIT_MS'[\s\S]*artifacts \? 4000 : 350/)
     assert.match(src, /async function waitForDomStability/)
+  })
+
+  it('keeps artifact exact navigation stricter than metrics-only exact navigation', () => {
+    assert.match(src, /const exactWaitUntil = artifacts \? 'networkidle2' : \(process\.env\.CRAWL_EXACT_WAIT_UNTIL \|\| 'load'\)/)
+    assert.match(src, /const exactTimeout = envInt\('CRAWL_EXACT_TIMEOUT_MS', artifacts \? 25000 : 12000\)/)
   })
 
   it('keeps screenshot capture available only for artifact-producing crawls', () => {

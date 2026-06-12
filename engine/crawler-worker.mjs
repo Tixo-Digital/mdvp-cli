@@ -220,13 +220,15 @@ async function crawlUrl(browser, url, options = {}) {
       await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))).catch(() => {})
       if (settle > 0) await new Promise(r => setTimeout(r, settle))
     } else {
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 }).catch(() =>
-        page.goto(url, { waitUntil: 'load', timeout: 15000 }).catch(() => {})
+      const exactWaitUntil = artifacts ? 'networkidle2' : (process.env.CRAWL_EXACT_WAIT_UNTIL || 'load')
+      const exactTimeout = envInt('CRAWL_EXACT_TIMEOUT_MS', artifacts ? 25000 : 12000)
+      await page.goto(url, { waitUntil: exactWaitUntil, timeout: exactTimeout }).catch(() =>
+        page.goto(url, { waitUntil: artifacts ? 'load' : 'domcontentloaded', timeout: Math.min(exactTimeout, 15000) }).catch(() => {})
       )
 
       // Wait for JS-rendered content: CSS vars, dark mode toggle, animations, canvas/WebGL.
       // Metrics-only exact audits skip artifact-grade settling; screenshots/video keep longer waits.
-      const styleSettleMs = envInt('CRAWL_EXACT_STYLE_SETTLE_MS', artifacts ? 1500 : 350)
+      const styleSettleMs = envInt('CRAWL_EXACT_STYLE_SETTLE_MS', artifacts ? 1500 : 150)
       await delay(styleSettleMs)
       const bgSample1 = await page.evaluate(() => {
         return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
@@ -243,7 +245,7 @@ async function crawlUrl(browser, url, options = {}) {
 
       // If background is still changing — wait longer (JS dark mode, animations)
       if (bgSample1 !== bgSample2) {
-        await delay(envInt('CRAWL_EXACT_MUTATION_SETTLE_MS', artifacts ? 2000 : 700))
+        await delay(envInt('CRAWL_EXACT_MUTATION_SETTLE_MS', artifacts ? 2000 : 400))
       }
 
       // Hook into rAF to ensure we sample after paint completes
@@ -284,7 +286,7 @@ async function crawlUrl(browser, url, options = {}) {
 
     const elCount = await page.evaluate('document.querySelectorAll("*").length').catch(() => 0)
     if (!fast && elCount < 100) {
-      await waitForDomStability(page, elCount, envInt('CRAWL_EXACT_SPARSE_DOM_WAIT_MS', artifacts ? 4000 : 700))
+      await waitForDomStability(page, elCount, envInt('CRAWL_EXACT_SPARSE_DOM_WAIT_MS', artifacts ? 4000 : 350))
     }
 
     // Scroll to top and ensure full paint before DOM sampling
