@@ -1,0 +1,35 @@
+ARG NODE_IMAGE=docker.io/library/node:22-bookworm-slim
+ARG MDVP_VERSION=latest
+
+FROM ${NODE_IMAGE}
+ARG MDVP_VERSION
+
+ENV NODE_ENV=production
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV MDVP_PUPPETEER_ARGS='["--no-sandbox","--disable-dev-shm-usage"]'
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    chromium \
+    fonts-liberation \
+    fonts-noto-color-emoji \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN NPM_CONFIG_CACHE=/tmp/npm-cache npm install -g --omit=dev --no-audit --no-fund "@mdvp/cli@${MDVP_VERSION}" \
+  && rm -rf /tmp/npm-cache
+
+RUN install -d -o node -g node /home/node/.mdvp/crawler
+
+ENV HOME=/home/node
+USER node
+WORKDIR /home/node/.mdvp/crawler
+RUN printf '%s\n' '{"type":"module","dependencies":{"puppeteer":"*"}}' > package.json \
+  && npm install --omit=dev --no-audit --no-fund \
+  && npm cache clean --force
+
+WORKDIR /home/node
+ENTRYPOINT ["mdvp"]
+CMD ["help"]

@@ -12,7 +12,9 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - **Container packaging docs** — added a distroless static container recipe and a runtime matrix for Alpine, Debian slim, Apple Container, Nix/devbox, and exact/browser images.
+- **Browser container recipe** — added a separate Chromium-equipped `containers/browser/Containerfile` for exact audits without making the static image heavy.
 - **Nix flake entrypoints** — added `flake.nix` with `nix develop`, `nix run .#verify`, `nix run .#smoke`, and `nix run .#static-audit`.
+- **GitHub Release package assets** — release workflow now attaches the npm package tarball and SHA256 checksum to GitHub Releases.
 
 ### Fixed
 

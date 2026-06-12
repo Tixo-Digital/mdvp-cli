@@ -41,6 +41,17 @@ npm i -D @mdvp/cli
 npx mdvp audit myapp.com
 ```
 
+### Download from GitHub Releases
+
+GitHub Releases include the npm package tarball and a SHA256 checksum:
+
+```bash
+npm i -g ./mdvp-cli-<version>.tgz
+mdvp audit myapp.com
+```
+
+The release tarball is downloadable and reproducible, but it is not a standalone native binary. It still requires Node.js 18+ and, for default exact audits, a browser runtime.
+
 ## First run
 
 The first default audit may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`) if no compatible browser is already available. To skip that download and use your system Chrome instead:
