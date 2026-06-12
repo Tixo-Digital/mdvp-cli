@@ -146,7 +146,8 @@ async function extractCSSDesignDNA(page) {
   }
 }
 
-async function crawlUrl(browser, url) {
+async function crawlUrl(browser, url, options = {}) {
+  const artifacts = options.artifacts !== false
   const page = await browser.newPage()
   page.setDefaultTimeout(20000)
   const consoleMessages = []
@@ -238,8 +239,8 @@ async function crawlUrl(browser, url) {
 
     const [metrics, htmlContent, videoResult] = await Promise.all([
       page.evaluate(EXTRACT_SCRIPT).catch(() => null),
-      page.content().catch(() => null),
-      (async () => {
+      artifacts ? page.content().catch(() => null) : null,
+      artifacts ? (async () => {
         const vp = `/tmp/v_${Date.now()}_${Math.random().toString(36).slice(2, 5)}.webm`
         try {
           const rec = await page.screencast({ path: vp })
@@ -259,7 +260,7 @@ async function crawlUrl(browser, url) {
           if (existsSync(vp)) { const b = readFileSync(vp).toString('base64'); unlinkSync(vp); return b }
         } catch { try { unlinkSync(vp) } catch {} }
         return null
-      })(),
+      })() : null,
     ])
 
     if (!metrics) throw new Error('No metrics')
@@ -296,13 +297,14 @@ async function crawlUrl(browser, url) {
     }
 
     const screenshots = {}
-    await page.evaluate('window.scrollTo(0,0)')
-    const viewports = [
-      { name: 'desktop-1440', width: 1440, height: 900, deviceScaleFactor: 2, isMobile: false, hasTouch: false },
-      { name: 'tablet-768', width: 768, height: 1024, deviceScaleFactor: 2, isMobile: false, hasTouch: true },
-      { name: 'iphone-390', width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
-    ]
-    for (const v of viewports) {
+    if (artifacts) {
+      await page.evaluate('window.scrollTo(0,0)')
+      const viewports = [
+        { name: 'desktop-1440', width: 1440, height: 900, deviceScaleFactor: 2, isMobile: false, hasTouch: false },
+        { name: 'tablet-768', width: 768, height: 1024, deviceScaleFactor: 2, isMobile: false, hasTouch: true },
+        { name: 'iphone-390', width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
+      ]
+      for (const v of viewports) {
       await page.setViewport({ width: v.width, height: v.height, deviceScaleFactor: v.deviceScaleFactor, isMobile: v.isMobile, hasTouch: v.hasTouch })
       await new Promise(r => setTimeout(r, 200))
       screenshots[v.name] = await page.screenshot({ type: 'jpeg', quality: 65, encoding: 'base64' })
@@ -1200,6 +1202,7 @@ async function crawlUrl(browser, url) {
 
         await page.evaluate(() => { const el = document.getElementById('__mdvp_overlay__'); if (el) el.remove() })
       }
+      }
     }
 
     metrics.consoleErrors = consoleMessages.filter(m => m.type === 'error').length
@@ -1207,7 +1210,7 @@ async function crawlUrl(browser, url) {
 
     return { success: true, metrics, screenshots, video: videoResult, html: htmlContent, network: networkRequests }
   } finally {
-    await page.close()
+    await page.close().catch(() => {})
   }
 }
 
@@ -1305,9 +1308,10 @@ async function main() {
     process.stderr.write(`[${NODE_ID}] launching browser...\n`)
     const browser = await ensureBrowser(browserState)
     try {
-      const result = await crawlUrl(browser, CRAWL_ONCE)
+      const includeScreenshots = process.env.CRAWL_ONCE_SCREENSHOTS === '1'
+      const fastStdout = stdoutMode && process.env.CRAWL_ONCE_FAST === '1' && !includeScreenshots
+      const result = await crawlUrl(browser, CRAWL_ONCE, { artifacts: !fastStdout })
       if (stdoutMode) {
-        const includeScreenshots = process.env.CRAWL_ONCE_SCREENSHOTS === '1'
         process.stdout.write(JSON.stringify({
           metrics: result.metrics,
           ...(includeScreenshots ? { screenshots: result.screenshots } : {})

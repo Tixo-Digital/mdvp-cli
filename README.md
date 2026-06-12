@@ -52,6 +52,9 @@ npx @mdvp/cli audit myapp.com --swarm
 # JSON output for scripting
 npx @mdvp/cli audit myapp.com --json | jq .components.css_health
 
+# Compare two saved JSON snapshots
+npx @mdvp/cli diff before.json after.json
+
 # Print a README badge for your site
 npx @mdvp/cli badge myapp.com
 ```
