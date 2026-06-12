@@ -20,6 +20,13 @@ describe('crawler fast audit path', () => {
     assert.match(src, /if \(!fast && elCount < 100\)/)
   })
 
+  it('keeps metrics-only exact waits shorter than artifact-producing crawls', () => {
+    assert.match(src, /CRAWL_EXACT_STYLE_SETTLE_MS'[\s\S]*artifacts \? 1500 : 350/)
+    assert.match(src, /CRAWL_EXACT_MUTATION_SETTLE_MS'[\s\S]*artifacts \? 2000 : 700/)
+    assert.match(src, /CRAWL_EXACT_SPARSE_DOM_WAIT_MS'[\s\S]*artifacts \? 4000 : 700/)
+    assert.match(src, /async function waitForDomStability/)
+  })
+
   it('keeps screenshot capture available only for artifact-producing crawls', () => {
     assert.match(src, /const includeScreenshots = process\.env\.CRAWL_ONCE_SCREENSHOTS === '1'/)
     assert.match(src, /const exactMode = process\.env\.CRAWL_ONCE_EXACT === '1'/)

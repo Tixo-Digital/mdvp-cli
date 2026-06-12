@@ -14,6 +14,34 @@ function isConnectionClosedError(err) {
   return !!(err && typeof err.message === 'string' && err.message.includes('Connection closed'))
 }
 
+function delay(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
+
+function envInt(name, fallback) {
+  const parsed = parseInt(process.env[name] || '', 10)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+async function waitForDomStability(page, initialCount, maxMs) {
+  if (maxMs <= 0) return initialCount
+  let count = initialCount
+  let stableSamples = 0
+  const started = Date.now()
+  while (Date.now() - started < maxMs) {
+    await delay(150)
+    const next = await page.evaluate('document.querySelectorAll("*").length').catch(() => count)
+    if (next > count) {
+      count = next
+      stableSamples = 0
+    } else {
+      stableSamples += 1
+    }
+    if (stableSamples >= 2) break
+  }
+  return count
+}
+
 async function launchBrowser() {
   return puppeteer.launch({
     headless: true,
@@ -196,16 +224,17 @@ async function crawlUrl(browser, url, options = {}) {
         page.goto(url, { waitUntil: 'load', timeout: 15000 }).catch(() => {})
       )
 
-      // Wait for JS-rendered content: CSS vars, dark mode toggle, animations, canvas/WebGL
-      // Sample body bg color twice — if it changed between samples, JS is still mutating styles
-      await new Promise(r => setTimeout(r, 1500))
+      // Wait for JS-rendered content: CSS vars, dark mode toggle, animations, canvas/WebGL.
+      // Metrics-only exact audits skip artifact-grade settling; screenshots/video keep longer waits.
+      const styleSettleMs = envInt('CRAWL_EXACT_STYLE_SETTLE_MS', artifacts ? 1500 : 350)
+      await delay(styleSettleMs)
       const bgSample1 = await page.evaluate(() => {
         return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
                getComputedStyle(document.body).backgroundColor ||
                'rgb(255,255,255)'
       }).catch(() => '')
 
-      await new Promise(r => setTimeout(r, 1500))
+      await delay(styleSettleMs)
       const bgSample2 = await page.evaluate(() => {
         return getComputedStyle(document.documentElement).getPropertyValue('--background') ||
                getComputedStyle(document.body).backgroundColor ||
@@ -214,7 +243,7 @@ async function crawlUrl(browser, url, options = {}) {
 
       // If background is still changing — wait longer (JS dark mode, animations)
       if (bgSample1 !== bgSample2) {
-        await new Promise(r => setTimeout(r, 2000))
+        await delay(envInt('CRAWL_EXACT_MUTATION_SETTLE_MS', artifacts ? 2000 : 700))
       }
 
       // Hook into rAF to ensure we sample after paint completes
@@ -254,7 +283,9 @@ async function crawlUrl(browser, url, options = {}) {
     })() : null
 
     const elCount = await page.evaluate('document.querySelectorAll("*").length').catch(() => 0)
-    if (!fast && elCount < 100) await new Promise(r => setTimeout(r, 4000))
+    if (!fast && elCount < 100) {
+      await waitForDomStability(page, elCount, envInt('CRAWL_EXACT_SPARSE_DOM_WAIT_MS', artifacts ? 4000 : 700))
+    }
 
     // Scroll to top and ensure full paint before DOM sampling
     await page.evaluate('window.scrollTo(0,0)').catch(() => {})
