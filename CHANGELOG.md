@@ -9,6 +9,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.34.2] — 2026-06-12
+
 ### Added
 
 - **Container packaging docs** — added a distroless static container recipe and a runtime matrix for Alpine, Debian slim, Apple Container, Nix/devbox, and exact/browser images.
