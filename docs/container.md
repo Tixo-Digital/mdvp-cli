@@ -7,6 +7,36 @@ MDVP has two container-friendly runtime profiles:
 | Static/cache | fast CI loops, low-memory runners, Docker/Apple Container/Nix smoke checks | no | small |
 | Exact/browser | rendered DOM evidence, JS apps, disputed scores, screenshots | yes | large |
 
+## Format Choice
+
+There is no newer universal build-file syntax that replaces Dockerfile syntax. The portable artifact is the OCI image. Apple `container` consumes and produces OCI-compatible images, and Podman/Buildah use `Containerfile` as the neutral name for the same Dockerfile instruction syntax.
+
+For MDVP, the canonical recipe is therefore:
+
+```text
+containers/static/Containerfile
+```
+
+Use it with Apple Container:
+
+```bash
+container build -t mdvp-cli-static:latest containers/static
+```
+
+Use the same file with Docker-compatible builders:
+
+```bash
+docker build -f containers/static/Containerfile -t mdvp-cli-static:latest containers/static
+```
+
+Use the same file with Podman:
+
+```bash
+podman build -f containers/static/Containerfile -t mdvp-cli-static:latest containers/static
+```
+
+Keeping the file named `Containerfile` avoids tying the recipe to Docker Desktop while staying compatible with Docker, Podman, Buildah, and Apple Container.
+
 The default CLI command outside containers is exact/browser:
 
 ```bash
@@ -21,7 +51,7 @@ MDVP_USE_CACHE=1 npx @mdvp/cli audit mdvp.dev --fast --json
 
 ## Lightweight Static Image
 
-This repository includes a distroless static image recipe:
+This repository includes the distroless static image recipe above:
 
 ```bash
 container build \
@@ -94,12 +124,15 @@ The distroless static recipe intentionally optimizes for the second column. Do n
 
 ## Nix And Devbox
 
-The checked-in `devbox.json` pins Node, git, GitHub/GitLab CLIs, jq, and Chromium where the platform supports it. Use:
+The checked-in `devbox.json` pins Node, git, GitHub/GitLab CLIs, jq, and Chromium where the platform supports it. The checked-in `flake.nix` provides native Nix commands for NixOS and non-devbox environments. Use:
 
 ```bash
 devbox run verify
 devbox run smoke
 devbox run audit-smoke
+nix run .#verify
+nix run .#smoke
+nix run .#static-audit
 ```
 
-On Apple Silicon macOS, Chromium is excluded from devbox because current nixpkgs does not provide a compatible Chromium build for that platform. Use the host browser with `PUPPETEER_EXECUTABLE_PATH` or test Linux browser behavior in a container or CI runner.
+On Apple Silicon macOS, Chromium is excluded from devbox because current nixpkgs does not provide a compatible Chromium build for that platform. Use the host browser with `PUPPETEER_EXECUTABLE_PATH` or test Linux browser behavior in a container or CI runner. See [Nix](nix.md) for flake details.

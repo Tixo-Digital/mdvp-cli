@@ -30,7 +30,9 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "SECURITY.md"
+    "SECURITY.md",
+    "flake.nix",
+    "flake.lock"
   ],
   "keywords": [
     "design-linter",

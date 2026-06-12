@@ -12,6 +12,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - **Container packaging docs** — added a distroless static container recipe and a runtime matrix for Alpine, Debian slim, Apple Container, Nix/devbox, and exact/browser images.
+- **Nix flake entrypoints** — added `flake.nix` with `nix develop`, `nix run .#verify`, `nix run .#smoke`, and `nix run .#static-audit`.
 
 ### Fixed
 
