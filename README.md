@@ -34,7 +34,7 @@ Puppeteer opens the URL → `getComputedStyle()` reads every element → 12 cate
 
 MDVP is useful when it gives a developer a concrete next change, not just a score.
 
-- **Dogfood finding:** `node cli.mjs audit mdvp.dev --timeout=45000 --no-header` produced B+ 75/100 and flagged an actionable issue: 5 font families on the rendered page where the professional limit is 2. The next engineering task is clear: consolidate the site typography stack and re-run the audit.
+- **Dogfood finding:** `node cli.mjs audit mdvp.dev` produced B+ 75/100 and flagged an actionable issue: 5 font families on the rendered page where the professional limit is 2. The next engineering task is clear: consolidate the site typography stack and re-run the audit.
 - **Before/after workflow:** the reproducible design-system fixture starts at 95/A+; stacking generated-UI problems drops it to 60/B- with originality at 0. That maps directly to development actions: reduce font families, replace default Tailwind purple-blue gradients, normalize pill radii, add semantic design tokens, and add real content.
 - **PR gate:** `npx @mdvp/cli init --github-action` turns those same checks into a preview-URL CI gate, so color sprawl, font drift, low spacing-grid adherence, and banned generated-UI signals fail before merge.
 

@@ -9,7 +9,7 @@ It is not a claim that the tool can replace human taste, product judgment, or de
 Command run from this repository:
 
 ```bash
-node cli.mjs audit mdvp.dev --timeout=45000 --no-header
+node cli.mjs audit mdvp.dev
 ```
 
 Observed result:
