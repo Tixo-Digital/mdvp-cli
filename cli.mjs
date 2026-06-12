@@ -34,8 +34,8 @@ async function main() {
     cloud: flags.has("--cloud"),  // explicit cloud dataset lookup (was default before v1.32.0)
     swarm: flags.has("--swarm"),  // local audit + contribute to public dataset
     check: flags.has("--check"),  // threshold enforcement — exit 1 on violation
-    fast: flags.has("--fast"),  // local audit speed hint; default for local audit
-    exact: flags.has("--exact"),  // rendered local audit without fast-path shortcuts
+    fast: flags.has("--fast"),  // static/cache shortcut; requires MDVP_USE_CACHE=1
+    exact: flags.has("--exact"),  // explicit rendered audit; default for local audit
     dryRun: flags.has("--dry-run"),
     force: flags.has("--force"),
     githubAction: flags.has("--github-action"),

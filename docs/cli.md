@@ -1,17 +1,20 @@
 # CLI commands
 
-Every command in `@mdvp/cli` v1.32+. `audit` now runs locally by default (no API key, no credits) and reads the API key from `MDVP_API_KEY` env var or `~/.mdvp/config.json` only when you pass `--cloud`. `submit`, `compare`, `top`, `worst`, `perceive`, and `recrawl` always read the key.
+Every command in `@mdvp/cli` v1.32+. `audit` runs locally by default (no API key, no credits) and uses the exact rendered browser path unless you opt into static/cache shortcuts. The CLI reads the API key from `MDVP_API_KEY` env var or `~/.mdvp/config.json` only when you pass `--cloud`. `submit`, `compare`, `top`, `worst`, `perceive`, and `recrawl` always read the key.
 
 ## Audit
 
 Score a single URL.
 
 ```bash
-# Default — static local audit, no Chromium, no API key, no credits
+# Default — exact rendered browser audit, no API key, no credits
 npx @mdvp/cli audit myapp.com
 
-# Exact — use the rendered browser path when validating a disputed result
+# Explicit exact — same runtime as the default, useful in scripts
 npx @mdvp/cli audit myapp.com --exact
+
+# Static/cache shortcut — approximate and opt-in
+MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 
 # Cloud — instant lookup from the public dataset (--json/--raw costs 1 credit)
 npx @mdvp/cli audit myapp.com --cloud
@@ -27,9 +30,9 @@ Flags:
 
 | Flag | What it does |
 |---|---|
-| _(none)_ | Static local audit. Fetches HTML/CSS and does not launch Chromium. |
-| `--exact` | Use the rendered browser path with full waits for disputed results. |
-| `--fast` | Explicitly request the default static path. |
+| _(none)_ | Exact local audit. Launches the browser crawler and scores rendered DOM/computed CSS unless `MDVP_USE_CACHE=1` is set. |
+| `--exact` | Explicit alias for the default exact rendered browser path. |
+| `--fast` | Static/cache shortcut marker for scripts. Requires `MDVP_USE_CACHE=1`; approximate and marked `source: "static"`. |
 | `--cloud` | Look up an existing dataset record. `--json`/`--raw` cost 1 credit. |
 | `--swarm` | Local audit + POST the result to the public dataset. |
 | `--check` | Enforce `.mdvprc` thresholds and DESIGN.md spec, exit 1 on violation. Local-only (cannot combine with `--cloud`). |
@@ -38,14 +41,14 @@ Flags:
 | `--raw` | Full dataset row including assets URLs (cloud only) |
 | `--text` | LLM-optimized compact format |
 | `--design=PATH` | Diff against a specific DESIGN.md file |
-| `--timeout=MS` | Static fetch timeout; exact/swarm also use it as the browser child-process timeout |
+| `--timeout=MS` | Browser child-process timeout; also applies to the static fetch path when `MDVP_USE_CACHE=1 --fast` is used |
 | `--no-vision` | Skip VLM analysis on the cloud `perceive` command |
 | `--mdvprc=PATH` | Path to a non-default config file |
 
 Output (text mode):
 
 ```
-myapp.com  C+  58/100  static audit
+myapp.com  C+  58/100  local audit
 
   css_health      ████████░░░░  48   32 colors · 4 fonts · 61% on grid
   visual_quality  ██████████░░  67
@@ -59,7 +62,13 @@ Lowest: originality (38) · color (44) · spacing (51)
   · Inter + Tailwind purple-blue palette — common design pattern
 ```
 
-JSON output adds a `source` field (`"static"`, `"local"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from. Static results also include an `analysis` object that names the analyzer and limitations.
+JSON output adds a `source` field (`"local"`, `"static"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from. Default exact results use `"local"`. Static/cache shortcut results use `"static"` and include an `analysis` object that names the analyzer and limitations.
+
+Environment:
+
+| Variable | What it does |
+|---|---|
+| `MDVP_USE_CACHE=1` | Opts the current process into the approximate static/cache shortcut for `audit`; use `--exact` to force the browser path for a single command. |
 
 ## Init
 
@@ -162,7 +171,7 @@ npx @mdvp/cli hire --tabs=4      # more throughput
 npx @mdvp/cli hire --daemon      # background process
 ```
 
-The `hire` command copies `engine/crawler-worker.mjs` (from this package) into `~/.mdvp/crawler/` and runs it. The same browser worker is used for `audit --exact`, live perception, screenshot/video flows, and `audit --swarm`; default `audit` uses the static analyzer.
+The `hire` command copies `engine/crawler-worker.mjs` (from this package) into `~/.mdvp/crawler/` and runs it. The same browser worker is used for default `audit`, `audit --exact`, live perception, screenshot/video flows, and `audit --swarm`. The static analyzer is used only for `MDVP_USE_CACHE=1 audit --fast`.
 
 ## MCP
 

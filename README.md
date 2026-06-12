@@ -1,6 +1,6 @@
 # @mdvp/cli
 
-**Design linter for AI-generated frontends.** Audit any live URL for HTML/CSS quality, design-system drift, accessibility-relevant structure, and common AI UI patterns. Default audits run locally through the static Rust analyzer with no API key, no account, and no screenshot baseline; Chromium is only used when you pass `--exact` for rendered-DOM evidence.
+**Design linter for AI-generated frontends.** Audit any live URL for HTML/CSS quality, design-system drift, accessibility-relevant structure, and common AI UI patterns. Default audits run locally through the exact rendered browser path with no API key, no account, and no screenshot baseline; static/cache shortcuts require `MDVP_USE_CACHE=1`.
 
 [![CI](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Tixo-Digital/mdvp-cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@mdvp/cli)](https://www.npmjs.com/package/@mdvp/cli)
@@ -26,7 +26,7 @@ Use it to:
 
 ![MDVP scoring pipeline](docs/assets/algorithm-flow.gif)
 
-Static audit fetches HTML + same-origin CSS → Rust extracts design metrics → 12 categories score into 4 components → a pattern registry highlights common design heuristics. Use `--exact` when you need a rendered browser audit with `getComputedStyle()`, screenshots, or motion artifacts. See [How it works](#how-it-works) below for the full walkthrough.
+Exact audit launches the local browser crawler → extracts rendered DOM metrics with `getComputedStyle()` → 12 categories score into 4 components → a pattern registry highlights common design heuristics. Set `MDVP_USE_CACHE=1` only when you intentionally want the approximate static/cache shortcut; add `--fast` in scripts to make that opt-in visible. See [How it works](#how-it-works) below for the full walkthrough.
 
 ---
 
@@ -46,16 +46,19 @@ See [Development proof](docs/development-proof.md) for the concrete workflow and
 
 Tools like v0, Bolt, Lovable, and Cursor generate frontends fast — but the output often shares common patterns: Inter as the primary font, Tailwind's default purple-blue-pink gradient palette, every button is `border-radius: 9999px`, 40+ unique CSS colors with no system. Visual regression tools can't help when there is no prior screenshot to compare against; code linters check syntax, not rendered quality.
 
-MDVP gives you numbers on the page structure and design system. The default audit is a no-Chromium static pass over HTML/CSS for fast CI feedback; `--exact` instruments the rendered page, extracts computed CSS values via `getComputedStyle()`, and is the right mode for disputed results or screenshot-backed evidence. The scoring is deterministic for the same input.
+MDVP gives you numbers on the page structure and design system. The default audit instruments the rendered page, extracts computed CSS values via `getComputedStyle()`, and is the right mode for disputed results or screenshot-backed evidence. The static analyzer is still available as an approximate shortcut, but only when you explicitly opt in with `MDVP_USE_CACHE=1 --fast`.
 
 ## Quickstart
 
 ```bash
-# Score any URL locally without launching Chromium
+# Score any URL locally with rendered browser evidence
 npx @mdvp/cli audit myapp.com
 
-# Use the slower rendered browser path when validating a disputed result
+# Make the default rendered browser path explicit in scripts
 npx @mdvp/cli audit myapp.com --exact
+
+# Use the approximate static/cache shortcut only after opting in
+MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 
 # Enforce thresholds in CI — exits 1 on violation
 npx @mdvp/cli audit myapp.com --check
@@ -82,7 +85,7 @@ npx @mdvp/cli badge myapp.com
 **Output:**
 
 ```
-myapp.com  C+  58/100  static audit
+myapp.com  C+  58/100  local audit
 
   css_health      ████████░░░░  48   32 colors · 4 fonts · 61% on grid
   visual_quality  ██████████░░  67
@@ -98,7 +101,7 @@ Lowest: originality (38) · color (44) · spacing (51)
 
 ## How it works
 
-Default audit fetches the page and same-origin stylesheets, runs the static analyzer, groups 12 categories into four named components, and uses independent heuristic detectors to score common AI-generated UI patterns. `--exact` switches to Puppeteer for rendered DOM and computed style evidence. See [the methodology paper](docs/methodology.md) for the full algorithm, weight table, and prior-work comparison.
+Default audit uses Puppeteer for rendered DOM and computed style evidence, groups 12 categories into four named components, and uses independent heuristic detectors to score common AI-generated UI patterns. The static Rust analyzer remains available through `MDVP_USE_CACHE=1 --fast` for low-resource loops, and its JSON output is marked `source: "static"` with limitations. See [the methodology paper](docs/methodology.md) for the full algorithm, weight table, and prior-work comparison.
 
 ## Documentation
 

@@ -1,17 +1,17 @@
 # Install
 
-`@mdvp/cli` ships as a single npm package. Default `audit` needs only Node.js 18+ and network access to the target URL. Chromium is used only for `audit --exact`, live perception, screenshots, video, and crawler-node flows.
+`@mdvp/cli` ships as a single npm package. Default `audit` needs Node.js 18+, network access to the target URL, and a browser runtime for the exact rendered audit. The no-Chromium static analyzer is available only when you opt into static/cache shortcuts with `MDVP_USE_CACHE=1`; use `--fast` in scripts to make that shortcut explicit.
 
 ## Requirements
 
 | | Minimum | Notes |
 |---|---|---|
 | Node.js | 18.0 | 20 LTS or 22 recommended |
-| RAM | 256 MB | `audit --exact` needs more because it launches a browser |
-| Disk | 100 MB | More if you use `--exact` and Puppeteer downloads Chromium |
+| RAM | 256 MB | Default `audit` launches a browser; static/cache shortcuts use less |
+| Disk | 100 MB | More if Puppeteer downloads Chromium |
 | Network | HTTPS egress | Required to crawl target URLs |
 
-The package is JavaScript plus a small Rust static analyzer source. If a Rust toolchain is available, the analyzer is compiled into `~/.mdvp/native/mdvp-static` on first use; otherwise the CLI falls back to a no-Chromium JavaScript static analyzer. Puppeteer is installed only when a browser-backed command needs it.
+The package is JavaScript plus a small Rust static analyzer source. Default `audit` uses the browser-backed crawler. If you run `MDVP_USE_CACHE=1 mdvp audit <url> --fast`, and a Rust toolchain is available, the static analyzer is compiled into `~/.mdvp/native/mdvp-static` on first static use; otherwise the CLI falls back to a no-Chromium JavaScript static analyzer.
 
 ## Install
 
@@ -43,14 +43,20 @@ npx mdvp audit myapp.com
 
 ## First run
 
-The first default audit does not download Chromium. If `cargo` is available, it may compile the static Rust analyzer once into `~/.mdvp/native/mdvp-static`; subsequent static audits reuse that binary.
-
-The first `--exact`, `perceive --live`, `submit`, or crawler-node run may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`). To skip that download and use your system Chrome instead:
+The first default audit may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`) if no compatible browser is already available. To skip that download and use your system Chrome instead:
 
 ```bash
 PUPPETEER_EXECUTABLE_PATH=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
-  npx @mdvp/cli audit myapp.com --exact
+  npx @mdvp/cli audit myapp.com
 ```
+
+The static/cache shortcut does not download Chromium. The env var is the actual opt-in; `--fast` makes it visible in scripts:
+
+```bash
+MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
+```
+
+If `cargo` is available, that first static shortcut may compile the Rust analyzer once into `~/.mdvp/native/mdvp-static`; subsequent static audits reuse that binary.
 
 ## Verify
 
@@ -69,13 +75,13 @@ Releases follow [semver](https://semver.org). The [CHANGELOG](../CHANGELOG.md) i
 
 ## Troubleshooting
 
-**Puppeteer download blocked** — default `audit` does not need Puppeteer. For `--exact` or screenshot/video flows, set `PUPPETEER_DOWNLOAD_BASE_URL` to an internal mirror, or use `PUPPETEER_EXECUTABLE_PATH` to point at an existing browser.
+**Puppeteer download blocked** — default `audit` uses the browser-backed exact path. Set `PUPPETEER_DOWNLOAD_BASE_URL` to an internal mirror, use `PUPPETEER_EXECUTABLE_PATH` to point at an existing browser, or opt into the approximate static/cache shortcut with `MDVP_USE_CACHE=1 --fast`.
 
 **Permission errors on `~/.cache/puppeteer`** — set `PUPPETEER_CACHE_DIR` to a writable location.
 
 **Sandbox / no-sandbox** — on minimal containers, pass `--no-sandbox` via the env var `MDVP_PUPPETEER_ARGS='["--no-sandbox"]'`.
 
-**Slow first exact crawl** — the URL itself may be slow, and the first browser-backed run may warm the Chromium cache. Re-run once after the browser install completes; if a heavy SPA still times out, use `--timeout=120000` and file an issue with the URL and local environment details.
+**Slow first crawl** — the URL itself may be slow, and the first browser-backed run may warm the Chromium cache. Re-run once after the browser install completes; if a heavy SPA still times out, use `--timeout=120000` and file an issue with the URL and local environment details.
 
 ## Next
 

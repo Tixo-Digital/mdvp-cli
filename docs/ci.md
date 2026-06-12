@@ -36,7 +36,7 @@ jobs:
           fail_on_violation: 'true'
 ```
 
-The action runs the static analyzer locally on the runner. No screenshot or DOM data is sent anywhere. Full reference: [`action/README.md`](../action/README.md).
+The action runs the exact browser audit locally on the runner. No screenshot or DOM data is sent anywhere by default. If you intentionally want the lower-resource static/cache shortcut, run the CLI directly with `MDVP_USE_CACHE=1 --fast`. Full reference: [`action/README.md`](../action/README.md).
 
 ## Configuration: `.mdvprc`
 
@@ -102,7 +102,7 @@ npx @mdvp/cli audit myapp.com --check
 ### Example failure
 
 ```
-myapp.com  C  62/100  static audit — FAIL
+myapp.com  C  62/100  local audit — FAIL
 
   ✗ unique_colors: 32 (limit 20)  [css_health]
   ✗ unique_font_families: 4 (limit 2)  [css_health]

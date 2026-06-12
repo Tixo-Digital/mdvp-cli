@@ -12,7 +12,7 @@ npx @mdvp/cli submit yoursite.com
 npx @mdvp/cli audit yoursite.com --swarm
 ```
 
-`audit --swarm` crawls with Puppeteer on your machine and ships the score to the public dataset — no API key, no credits. Default `audit` stays static and does not contribute public dataset rows.
+Default `audit` crawls with Puppeteer on your machine for rendered evidence but does not contribute public dataset rows. `audit --swarm` uses the same local browser audit and then ships the score to the public dataset — no API key, no credits. The static/cache shortcut remains private and approximate behind `MDVP_USE_CACHE=1 --fast`.
 
 ## Add the badge
 

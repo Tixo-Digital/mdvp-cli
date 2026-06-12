@@ -1,7 +1,7 @@
 name: MDVP Design Quality Check
 description: >
   Audit a URL for design quality — CSS health, visual quality, and structure
-  scores — using the bundled local engine. No API key required.
+  scores — using the local exact rendered browser engine. No API key required.
   Fails the workflow if scores fall below configured thresholds.
 
 author: Tixo Digital
@@ -90,7 +90,7 @@ runs:
       working-directory: ${{ inputs.working_directory }}
       run: |
         set -e
-        RESULT=$(npx --yes @mdvp/cli@latest audit "${{ inputs.url }}" --local --check --json 2>/tmp/mdvp-stderr.txt || true)
+        RESULT=$(npx --yes @mdvp/cli@latest audit "${{ inputs.url }}" --exact --check --json 2>/tmp/mdvp-stderr.txt || true)
         EXIT_CODE=$?
 
         echo "overall_score=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String(d.overall_score??''))")" >> $GITHUB_OUTPUT

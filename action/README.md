@@ -104,6 +104,14 @@ Thresholds are checked only when explicitly set (via `.mdvprc` or action inputs)
 
 Default thresholds are conservative — they catch obvious design health issues without blocking normal development.
 
-## Privacy
+## Runtime And Privacy
 
-The action runs the static analyzer locally on the GitHub Actions runner. No screenshot or DOM data is sent to mdvp.dev.
+The action runs the exact rendered browser audit locally on the GitHub Actions runner. No screenshot or DOM data is sent to mdvp.dev by default.
+
+For lower-resource CI experiments, call the CLI directly instead of this action:
+
+```bash
+MDVP_USE_CACHE=1 npx @mdvp/cli audit "$URL" --fast --check
+```
+
+That shortcut is approximate and produces `source: "static"` output.
