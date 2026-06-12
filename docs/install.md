@@ -75,7 +75,7 @@ Releases follow [semver](https://semver.org). The [CHANGELOG](../CHANGELOG.md) i
 
 **Sandbox / no-sandbox** — on minimal containers, pass `--no-sandbox` via the env var `MDVP_PUPPETEER_ARGS='["--no-sandbox"]'`.
 
-**Slow first crawl** — the URL itself may be slow; the bundled timeout is 60s. Use `--timeout=120000` for heavy SPAs.
+**Slow first crawl** — the URL itself may be slow, and the first run also has to warm the Chromium cache. Re-run once after the browser install completes; if a heavy SPA still times out, file an issue with the URL and local environment details.
 
 ## Next
 
