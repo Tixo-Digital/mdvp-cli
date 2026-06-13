@@ -52,6 +52,8 @@ mdvp audit myapp.com
 
 The release tarball is downloadable and reproducible, but it is not a standalone native binary. It still requires Node.js 18+ and, for default exact audits, a browser runtime.
 
+Standalone binary artifacts are being scoped as static-only release assets first, not as a replacement for the full exact/browser CLI. See [Standalone binaries](binaries.md) for the packaging decision, platform archive plan, and Chromium constraints.
+
 ## First run
 
 The first default audit may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`) if no compatible browser is already available. To skip that download and use your system Chrome instead:
