@@ -149,6 +149,8 @@ git push && git push origin v1.33.1-nightly.20260611.1
 
 Prerelease tags publish to npm with dist-tag `nightly` and create GitHub prereleases. They must not update npm `latest`. Stable releases still use `release:patch`, `release:minor`, or `release:major` after the intended nightly changes are merged into the larger release branch.
 
+After a release or nightly PR is merged, use the [automation cleanup checklist](automation-cleanup.md) before deleting old GitHub branches or local isolated worktrees.
+
 ## Contributing
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for the contribution policy, code of conduct, and the contributor license.
