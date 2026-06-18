@@ -63,6 +63,9 @@ MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 # Enforce thresholds in CI — exits 1 on violation
 npx @mdvp/cli audit myapp.com --check
 
+# Score a logged-in local or staging page through your own Chrome session
+MDVP_BROWSER_URL=http://127.0.0.1:9222 npx @mdvp/cli audit http://localhost:3000/dashboard --json
+
 # Create starter .mdvprc and GitHub Actions workflow
 npx @mdvp/cli init --github-action
 
@@ -109,6 +112,7 @@ Default audit uses Puppeteer for rendered DOM and computed style evidence, group
 - [CLI commands](docs/cli.md) — every flag, every subcommand, exit codes
 - [Scoring](docs/scoring.md) — what the four components measure, the signal registry
 - [DESIGN.md compliance](docs/design-md.md) — diff audited page metrics against your design system
+- [Authenticated page scoring](docs/authenticated-scoring.md) — local Chrome session connector prototype and privacy model
 - [CI enforcement](docs/ci.md) — `.mdvprc`, GitHub Action, exit codes, other CI systems
 - [Containers](docs/container.md) — Alpine, distroless, Apple Container, and exact/browser image guidance
 - [Nix](docs/nix.md) — `nix develop`, reproducible verify/smoke apps, and NixOS notes

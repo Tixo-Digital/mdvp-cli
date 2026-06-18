@@ -3,10 +3,13 @@ import { readFileSync, existsSync, unlinkSync } from 'fs'
 
 const API = process.env.API_URL || 'https://api.mdvp.dev'
 const CHROMIUM_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+const BROWSER_WS_ENDPOINT = process.env.MDVP_BROWSER_WS_ENDPOINT || undefined
+const BROWSER_URL = process.env.MDVP_BROWSER_URL || undefined
 const LAUNCH_ARGS = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-extensions', '--no-first-run', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-ipc-flooding-protection', '--memory-pressure-off', '--disable-features=TranslateUI', '--no-zygote']
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL || '10000')
 const NODE_ID = process.env.NODE_ID || `worker-${Math.random().toString(36).slice(2, 8)}`
 const TABS = parseInt(process.env.TABS || '2')
+const CONNECTED_BROWSERS = new WeakSet()
 
 const EXTRACT_SCRIPT = readFileSync(new URL('./extract.js', import.meta.url), 'utf-8').trim()
 
@@ -43,11 +46,29 @@ async function waitForDomStability(page, initialCount, maxMs) {
 }
 
 async function launchBrowser() {
+  if (BROWSER_WS_ENDPOINT || BROWSER_URL) {
+    const browser = await puppeteer.connect({
+      ...(BROWSER_WS_ENDPOINT ? { browserWSEndpoint: BROWSER_WS_ENDPOINT } : { browserURL: BROWSER_URL }),
+      defaultViewport: null,
+    })
+    CONNECTED_BROWSERS.add(browser)
+    return browser
+  }
+
   return puppeteer.launch({
     headless: true,
     executablePath: CHROMIUM_PATH,
     args: LAUNCH_ARGS,
   })
+}
+
+async function closeBrowser(browser) {
+  if (!browser) return
+  if (CONNECTED_BROWSERS.has(browser)) {
+    browser.disconnect()
+    return
+  }
+  await browser.close().catch(() => {})
 }
 
 async function ensureBrowser(browserState) {
@@ -62,7 +83,7 @@ async function relaunchBrowser(browserState, reason) {
     if (reason) console.error(`[${NODE_ID}] ${reason}`)
     const stale = browserState.current
     browserState.current = null
-    if (stale) await stale.close().catch(() => {})
+    if (stale) await closeBrowser(stale)
     browserState.current = await launchBrowser()
     return browserState.current
   })().finally(() => {
@@ -1402,7 +1423,7 @@ async function main() {
         process.exit(1)
       }
     }
-    await browserState.current?.close().catch(() => {})
+    await closeBrowser(browserState.current)
     process.exit(0)
   }
 
