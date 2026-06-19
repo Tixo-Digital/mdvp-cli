@@ -11,6 +11,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.35.0] — 2026-06-20
+
+### Added
+
+- **Authenticated page scoring prototype** — local exact audits can connect to a developer-owned Chrome session via `MDVP_BROWSER_URL` or `MDVP_BROWSER_WS_ENDPOINT` for logged-in local and staging pages.
+- **Gradient background signal** — `originality` now flags repeated or layered gradient background surfaces, with rendered, JS static, and native static analyzer coverage.
+- **GitHub Action reports** — the composite action now wires outputs, writes a GitHub Actions job summary, and can optionally upsert a PR comment with `comment_on_pr`.
+- **Standalone binary direction docs** — install/runtime/container docs now explain the static-only binary path and why exact/browser audits remain npm-first.
+- **Automation cleanup checklist** — development docs now include post-merge/post-release cleanup guidance for automation branches and worktrees.
+
+### Fixed
+
+- **Local audit URL preservation** — exact and authenticated local audits now preserve explicit schemes, ports, paths, and query strings instead of reducing every target to `https://<domain>`.
+
+---
+
 ## [1.34.2] — 2026-06-12
 
 ### Added
