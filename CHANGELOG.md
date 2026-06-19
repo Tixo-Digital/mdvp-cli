@@ -24,6 +24,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - **Local audit URL preservation** — exact and authenticated local audits now preserve explicit schemes, ports, paths, and query strings instead of reducing every target to `https://<domain>`.
+- **Release scripts** — npm release commands now use a checked-in helper instead of fragile inline shell quoting.
 
 ---
 
