@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,6 +8,10 @@ const __dir = dirname(fileURLToPath(import.meta.url))
 const ROOT_DIR = join(__dir, '..')
 const PKG = JSON.parse(readFileSync(join(ROOT_DIR, 'package.json'), 'utf8'))
 const MANIFEST = join(ROOT_DIR, 'native', 'mdvp-static', 'Cargo.toml')
+const NATIVE_SOURCE_FILES = [
+  MANIFEST,
+  join(ROOT_DIR, 'native', 'mdvp-static', 'src', 'main.rs'),
+]
 const CACHE_DIR = join(homedir(), '.mdvp', 'native', 'mdvp-static', `v${PKG.version}`)
 const BIN_NAME = process.platform === 'win32' ? 'mdvp-static.exe' : 'mdvp-static'
 const BUILT_BIN = join(CACHE_DIR, 'release', BIN_NAME)
@@ -129,7 +133,7 @@ function findNativeBinary() {
   if (process.env.MDVP_STATIC_ANALYZER && existsSync(process.env.MDVP_STATIC_ANALYZER)) {
     return process.env.MDVP_STATIC_ANALYZER
   }
-  if (existsSync(BUILT_BIN)) return BUILT_BIN
+  if (existsSync(BUILT_BIN) && nativeBinaryIsFresh()) return BUILT_BIN
   if (!existsSync(MANIFEST) || !commandExists('cargo')) return null
 
   mkdirSync(CACHE_DIR, { recursive: true })
@@ -140,6 +144,15 @@ function findNativeBinary() {
     timeout: 60_000,
   })
   return build.status === 0 && existsSync(BUILT_BIN) ? BUILT_BIN : null
+}
+
+function nativeBinaryIsFresh() {
+  try {
+    const builtAt = statSync(BUILT_BIN).mtimeMs
+    return NATIVE_SOURCE_FILES.every((file) => !existsSync(file) || statSync(file).mtimeMs <= builtAt)
+  } catch {
+    return false
+  }
 }
 
 function commandExists(command) {
@@ -178,6 +191,8 @@ function normalizeStaticMetrics(metrics, analyzer) {
     backdropBlurCount: 0,
     animationCount: 0,
     gradientCount: 0,
+    gradientBackgroundCount: 0,
+    gradientBackgroundLayerCount: 0,
     maxLineLength: 0,
     genericTextCount: 0,
     customProperties: 0,
@@ -214,6 +229,8 @@ function analyzeStaticHtmlFallback(html) {
   const countTag = (name) => tags.filter((tag) => tag.startsWith(`<${name}`)).length
   const landmarks = ['nav', 'main', 'article', 'aside', 'header', 'footer', 'section'].reduce((n, tag) => n + countTag(tag), 0)
   const divSpan = countTag('div') + countTag('span')
+  const gradientLayers = (cssLower.match(/-gradient\(/g) || []).length
+  const gradientBackgrounds = countGradientBackgroundDeclarations(cssLower)
   return {
     totalElements: total,
     colors: extractCssValues(css, /#[0-9a-f]{6}\b|rgba?\([^)]+\)/gi),
@@ -239,10 +256,18 @@ function analyzeStaticHtmlFallback(html) {
     hasDarkMode: cssLower.includes('prefers-color-scheme'),
     hasContainerQueries: cssLower.includes('@container'),
     hasSrcset: /\ssrcset=/.test(lower),
-    gradientCount: (cssLower.match(/gradient\(/g) || []).length,
+    gradientCount: gradientLayers,
+    gradientBackgroundCount: gradientBackgrounds,
+    gradientBackgroundLayerCount: gradientLayers,
     ctaCount: (lower.match(/get started|sign up|try|buy|contact|book|start/g) || []).length,
     navItemCount: ((lower.match(/<nav[\s\S]*?<\/nav>/) || [''])[0].match(/<(a|button)\b/g) || []).length,
   }
+}
+
+function countGradientBackgroundDeclarations(css) {
+  return [...css.matchAll(/\bbackground(?:-image)?\s*:\s*([^;}{]+)/g)]
+    .filter((match) => match[1].includes('gradient('))
+    .length
 }
 
 function declarationValues(css, property) {

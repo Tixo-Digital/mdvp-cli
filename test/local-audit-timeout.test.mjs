@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 
-import { cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker } from '../commands/audit-local.mjs'
+import { cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveBrowserExecutable, resolveLocalAuditRuntime, runCrawlerWorker } from '../commands/audit-local.mjs'
 
 function tempScript(contents) {
   const cwd = mkdtempSync(join(tmpdir(), 'mdvp-audit-timeout-'))
@@ -67,6 +67,30 @@ describe('resolveLocalAuditRuntime', () => {
       mode: 'browser',
       reason: 'swarm contribution',
     })
+  })
+})
+
+describe('resolveBrowserExecutable', () => {
+  it('uses an existing PUPPETEER_EXECUTABLE_PATH first', () => {
+    assert.equal(
+      resolveBrowserExecutable({
+        platform: 'darwin',
+        env: { PUPPETEER_EXECUTABLE_PATH: '/custom/chrome' },
+        exists: (path) => path === '/custom/chrome',
+      }),
+      '/custom/chrome',
+    )
+  })
+
+  it('falls back to standard macOS Chrome locations', () => {
+    assert.equal(
+      resolveBrowserExecutable({
+        platform: 'darwin',
+        env: { PUPPETEER_EXECUTABLE_PATH: '' },
+        exists: (path) => path === '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      }),
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    )
   })
 })
 

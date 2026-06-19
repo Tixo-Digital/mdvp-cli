@@ -15,6 +15,7 @@ describe('static analyzer', () => {
           @container card (min-width: 300px) { .card { padding: 24px; } }
           body { color: #111111; background: #ffffff; font-family: Inter, sans-serif; font-size: 18px; }
           .card { padding: 16px; border-radius: 8px; gap: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+          .hero { background-image: radial-gradient(circle at top left, #2563eb, transparent), linear-gradient(135deg, #111111, #2563eb); }
           .cta { background: #2563eb; color: #ffffff; font-weight: 700; }
         `)
         return
@@ -31,7 +32,7 @@ describe('static analyzer', () => {
           <body>
             <nav><a href="/docs">Docs</a><a href="/pricing">Pricing</a></nav>
             <main>
-              <h1>Product quality</h1>
+              <h1 class="hero">Product quality</h1>
               <section class="card"><p>Useful text</p><a class="cta" href="/start">Get started</a></section>
             </main>
           </body>
@@ -53,6 +54,8 @@ describe('static analyzer', () => {
       assert.ok(result.metrics.fontSizes.some(([value]) => value === '18px'))
       assert.ok(result.metrics.paddings.some(([value]) => value === '16px'))
       assert.equal(result.metrics.hasContainerQueries, true)
+      assert.equal(result.metrics.gradientBackgroundCount, 1)
+      assert.equal(result.metrics.gradientBackgroundLayerCount, 2)
     } finally {
       await new Promise((resolve) => server.close(resolve))
     }

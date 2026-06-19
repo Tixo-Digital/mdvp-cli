@@ -42,6 +42,8 @@ struct Metrics {
     backdrop_blur_count: usize,
     animation_count: usize,
     gradient_count: usize,
+    gradient_background_count: usize,
+    gradient_background_layer_count: usize,
     max_line_length: usize,
     generic_text_count: usize,
     custom_properties: usize,
@@ -74,7 +76,7 @@ impl Metrics {
         };
 
         format!(
-            "{{\"totalElements\":{},\"colors\":{},\"fontSizes\":{},\"fontFamilies\":{},\"fontWeights\":{},\"paddings\":{},\"margins\":{},\"borderRadii\":{},\"gaps\":{},\"lineHeights\":{},\"shadows\":{},\"overflows\":{},\"emojiCount\":{},\"divRatio\":{},\"landmarkCount\":{},\"h1Count\":{},\"emptyLinks\":{},\"imagesWithoutAlt\":{},\"externalScripts\":{},\"hasViewportMeta\":{},\"hasLangAttr\":{},\"metaDescription\":{},\"titleTag\":{},\"backdropBlurCount\":{},\"animationCount\":{},\"gradientCount\":{},\"maxLineLength\":{},\"genericTextCount\":{},\"customProperties\":{},\"hasDarkMode\":{},\"hasContainerQueries\":{},\"hasSrcset\":{},\"unicodeSymbols\":{},\"rasterLogos\":{},\"svgIcons\":{},\"rasterIcons\":{},\"genericButtonTexts\":{},\"textOverflows\":{},\"lineHeightIssues\":{},\"lineLengthIssues\":{},\"letterSpacingAllCaps\":{},\"ctaCount\":{},\"navItemCount\":{},\"pulseAnimationCount\":{},\"gradientTextCount\":{},\"statusDotCount\":{},\"eyebrowCount\":{},\"analysisMode\":\"static\",\"staticAnalyzer\":\"rust\"}}",
+            "{{\"totalElements\":{},\"colors\":{},\"fontSizes\":{},\"fontFamilies\":{},\"fontWeights\":{},\"paddings\":{},\"margins\":{},\"borderRadii\":{},\"gaps\":{},\"lineHeights\":{},\"shadows\":{},\"overflows\":{},\"emojiCount\":{},\"divRatio\":{},\"landmarkCount\":{},\"h1Count\":{},\"emptyLinks\":{},\"imagesWithoutAlt\":{},\"externalScripts\":{},\"hasViewportMeta\":{},\"hasLangAttr\":{},\"metaDescription\":{},\"titleTag\":{},\"backdropBlurCount\":{},\"animationCount\":{},\"gradientCount\":{},\"gradientBackgroundCount\":{},\"gradientBackgroundLayerCount\":{},\"maxLineLength\":{},\"genericTextCount\":{},\"customProperties\":{},\"hasDarkMode\":{},\"hasContainerQueries\":{},\"hasSrcset\":{},\"unicodeSymbols\":{},\"rasterLogos\":{},\"svgIcons\":{},\"rasterIcons\":{},\"genericButtonTexts\":{},\"textOverflows\":{},\"lineHeightIssues\":{},\"lineLengthIssues\":{},\"letterSpacingAllCaps\":{},\"ctaCount\":{},\"navItemCount\":{},\"pulseAnimationCount\":{},\"gradientTextCount\":{},\"statusDotCount\":{},\"eyebrowCount\":{},\"analysisMode\":\"static\",\"staticAnalyzer\":\"rust\"}}",
             self.total_elements,
             map_json(&self.colors),
             map_json(&self.font_sizes),
@@ -101,6 +103,8 @@ impl Metrics {
             self.backdrop_blur_count,
             self.animation_count,
             self.gradient_count,
+            self.gradient_background_count,
+            self.gradient_background_layer_count,
             self.max_line_length,
             self.generic_text_count,
             self.custom_properties,
@@ -362,6 +366,10 @@ fn analyze_declarations(css: &str, metrics: &mut Metrics) {
         }
         if value.contains("gradient(") {
             metrics.gradient_count += 1;
+            if prop == "background" || prop == "background-image" {
+                metrics.gradient_background_count += 1;
+                metrics.gradient_background_layer_count += count_occurrences(value, "-gradient(");
+            }
         }
         if prop.contains("animation") || prop.contains("transition") {
             metrics.animation_count += 1;

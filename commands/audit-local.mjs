@@ -2,6 +2,7 @@ import { DIM, RED, scoreColor, bar, parseDomain, toTextFormat, BOLD } from '../l
 import { CATS, R } from '../lib/constants.mjs'
 import { sourceLabel } from '../lib/source-label.mjs'
 import { homedir } from 'os'
+import { existsSync as fsExistsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
@@ -10,6 +11,12 @@ const ENGINE_DIR = join(__dir, '..', 'engine')
 const CRAWLER_WORKER = join(ENGINE_DIR, 'crawler-worker.mjs')
 const EXTRACT_JS = join(ENGINE_DIR, 'extract.js')
 const DEFAULT_LOCAL_CRAWL_TIMEOUT_MS = 60000
+const LINUX_BROWSER_CANDIDATES = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"]
+const DARWIN_BROWSER_CANDIDATES = [
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+]
 
 function envFlag(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value ?? '').trim().toLowerCase())
@@ -39,6 +46,17 @@ function resolveLocalAuditRuntime(opts = {}, env = process.env) {
 function normalizeLocalCrawlTimeout(value, fallback = DEFAULT_LOCAL_CRAWL_TIMEOUT_MS) {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function resolveBrowserExecutable({ platform = process.platform, env = process.env, exists = fsExistsSync } = {}) {
+  const configured = String(env.PUPPETEER_EXECUTABLE_PATH || '').trim()
+  if (configured && exists(configured)) return configured
+  const candidates = platform === 'darwin'
+    ? DARWIN_BROWSER_CANDIDATES
+    : platform === 'linux'
+      ? LINUX_BROWSER_CANDIDATES
+      : []
+  return candidates.find((candidate) => exists(candidate))
 }
 
 function terminateCrawlerChild(child) {
@@ -171,20 +189,12 @@ export async function cmdAuditLocal(domain, opts = {}) {
     }
 
     const isLinux = process.platform === "linux"
-    let chromiumPath = undefined
-    if (isLinux) {
+    let chromiumPath = resolveBrowserExecutable()
+    if (isLinux && !chromiumPath) {
       const { execSync } = await import("child_process")
-      const candidates = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"]
-      for (const p of candidates) {
-        try { execSync(`test -x ${p}`, { stdio: "ignore" }); chromiumPath = p; break } catch {}
-      }
-      if (!chromiumPath) {
-        process.stderr.write(`${DIM}installing chromium...${R}\n`)
-        execSync("apt-get install -y chromium-browser 2>/dev/null || snap install chromium 2>/dev/null || true", { stdio: "inherit" })
-        for (const p of candidates) {
-          try { execSync(`test -x ${p}`, { stdio: "ignore" }); chromiumPath = p; break } catch {}
-        }
-      }
+      process.stderr.write(`${DIM}installing chromium...${R}\n`)
+      execSync("apt-get install -y chromium-browser 2>/dev/null || snap install chromium 2>/dev/null || true", { stdio: "inherit" })
+      chromiumPath = resolveBrowserExecutable()
     }
 
     process.stderr.write(`${DIM}crawling https://${domain} locally...${R}\n`)
@@ -332,4 +342,4 @@ export async function cmdAuditLocal(domain, opts = {}) {
   return payload
 }
 
-export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }
+export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveBrowserExecutable, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }
