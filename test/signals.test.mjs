@@ -135,6 +135,13 @@ describe('new anti-pattern signals', () => {
     assert.ok(find('gradient-text').test({ gradientTextCount: 2 }, ctx))
   })
 
+  it('gradient-background fires on repeated or layered gradient surfaces', () => {
+    assert.equal(find('gradient-background').test({ gradientBackgroundCount: 1, gradientBackgroundLayerCount: 1 }, ctx), null)
+    assert.equal(find('gradient-background').test({ gradientBackgroundCount: 2, gradientBackgroundLayerCount: 2 }, ctx).penalty, 6)
+    assert.ok(find('gradient-background').test({ gradientBackgroundCount: 1, gradientBackgroundLayerCount: 4 }, ctx))
+    assert.equal(find('gradient-background').test({ gradientTextCount: 3 }, ctx), null)
+  })
+
   it('generic-marketing-copy fires on repeated generic phrases', () => {
     assert.equal(find('generic-marketing-copy').test({ genericTextCount: 1 }, ctx), null)
     assert.ok(find('generic-marketing-copy').test({ genericTextCount: 2 }, ctx))

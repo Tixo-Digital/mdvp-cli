@@ -10,7 +10,8 @@
   let total = 0, overflows = 0, emojiCount = 0, divSpanCount = 0,
     backdropBlurCount = 0, animationCount = 0, gradientCount = 0,
     emptyLinks = 0, imagesWithoutAlt = 0, maxLineLength = 0, genericTextCount = 0,
-    pulseAnimationCount = 0, gradientTextCount = 0, statusDotCount = 0;
+    pulseAnimationCount = 0, gradientTextCount = 0, gradientBackgroundCount = 0,
+    gradientBackgroundLayerCount = 0, statusDotCount = 0;
 
   const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
   const genericPhrases = ['lorem ipsum', 'your amazing', 'get started today', 'welcome to our', 'we are a team', 'our mission is', 'revolutionize', 'cutting-edge', 'next-generation', 'world-class'];
@@ -68,13 +69,22 @@
     if (cls.includes('pulse') || cls.includes('animate-ping')) pulseAnimationCount++;
 
     // Gradients
-    if (cs.backgroundImage && cs.backgroundImage.includes('gradient')) gradientCount++;
-
-    // Gradient text (background-clip: text pattern — vibe-code aesthetic)
-    if (
+    const gradientLayers = cs.backgroundImage
+      ? (cs.backgroundImage.match(/-gradient\(/g) || []).length
+      : 0;
+    const isGradientText =
       (cs.webkitTextFillColor === 'transparent' || cs.webkitTextFillColor === 'rgba(0, 0, 0, 0)') &&
-      cs.backgroundImage && cs.backgroundImage.includes('gradient')
-    ) gradientTextCount++;
+      cs.backgroundImage && cs.backgroundImage.includes('gradient');
+
+    if (gradientLayers > 0) {
+      gradientCount++;
+      if (isGradientText) {
+        gradientTextCount++;
+      } else {
+        gradientBackgroundCount++;
+        gradientBackgroundLayerCount += gradientLayers;
+      }
+    }
 
     // Status dots — tiny colored circles (online/status indicators)
     // Heuristic: w == h, <= 14px, border-radius >= 50%, non-neutral color
@@ -310,6 +320,8 @@
     navItemCount: navItems,
     pulseAnimationCount,
     gradientTextCount,
+    gradientBackgroundCount,
+    gradientBackgroundLayerCount,
     statusDotCount,
     eyebrowCount,
   };

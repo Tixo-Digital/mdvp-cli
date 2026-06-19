@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 
-import { cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalAuditTarget, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker } from '../commands/audit-local.mjs'
+import { cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveBrowserExecutable, resolveLocalAuditRuntime, runCrawlerWorker } from '../commands/audit-local.mjs'
 
 function tempScript(contents) {
   const cwd = mkdtempSync(join(tmpdir(), 'mdvp-audit-timeout-'))
@@ -23,24 +23,6 @@ describe('normalizeLocalCrawlTimeout', () => {
     assert.equal(normalizeLocalCrawlTimeout(null, 500), 500)
     assert.equal(normalizeLocalCrawlTimeout('0', 500), 500)
     assert.equal(normalizeLocalCrawlTimeout('nope', 500), 500)
-  })
-})
-
-describe('normalizeLocalAuditTarget', () => {
-  it('preserves full explicit URLs for local and authenticated audits', () => {
-    assert.deepEqual(normalizeLocalAuditTarget('http://localhost:3000/dashboard?tab=design#debug'), {
-      id: 'localhost:3000',
-      url: 'http://localhost:3000/dashboard?tab=design',
-      display: 'localhost:3000/dashboard?tab=design',
-    })
-  })
-
-  it('keeps bare domains on the existing https default', () => {
-    assert.deepEqual(normalizeLocalAuditTarget('www.mdvp.dev'), {
-      id: 'mdvp.dev',
-      url: 'https://www.mdvp.dev/',
-      display: 'mdvp.dev',
-    })
   })
 })
 
@@ -85,6 +67,30 @@ describe('resolveLocalAuditRuntime', () => {
       mode: 'browser',
       reason: 'swarm contribution',
     })
+  })
+})
+
+describe('resolveBrowserExecutable', () => {
+  it('uses an existing PUPPETEER_EXECUTABLE_PATH first', () => {
+    assert.equal(
+      resolveBrowserExecutable({
+        platform: 'darwin',
+        env: { PUPPETEER_EXECUTABLE_PATH: '/custom/chrome' },
+        exists: (path) => path === '/custom/chrome',
+      }),
+      '/custom/chrome',
+    )
+  })
+
+  it('falls back to standard macOS Chrome locations', () => {
+    assert.equal(
+      resolveBrowserExecutable({
+        platform: 'darwin',
+        env: { PUPPETEER_EXECUTABLE_PATH: '' },
+        exists: (path) => path === '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      }),
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    )
   })
 })
 
