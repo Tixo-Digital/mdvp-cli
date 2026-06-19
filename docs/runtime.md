@@ -52,10 +52,16 @@ The first native boundary should be one of these:
 3. **Packed CLI shell:** keep browser crawling in JS/Puppeteer or Playwright for exact mode, but move scoring and output formatting into a native binary after the metrics JSON is captured.
 4. **Later browser replacement:** evaluate browser-control alternatives only after metrics-only audit is fast, because replacing Puppeteer does not remove network and page-render waits.
 
+## Standalone Binary Direction
+
+Standalone release binaries should start with the static analyzer path, not the full exact/browser CLI. A static-only binary can be small, deterministic, and useful for low-resource environments, but it must keep `source: "static"` provenance and document the missing browser-only signals. The full CLI remains npm-first because default `audit` depends on Node.js command orchestration and a Chromium-compatible browser runtime.
+
+See [Standalone binaries](binaries.md) for the packaging comparison, archive naming plan, and smoke-test contract.
+
 ## Non-Goals
 
 - No hard 1s guarantee for arbitrary remote URLs.
-- No native binary publish in this spike.
+- No claim that a static-only binary is equivalent to the full exact/browser CLI.
 - No loss of existing JSON/text output shapes.
 - No claim that static audit is equivalent to a rendered browser audit.
 

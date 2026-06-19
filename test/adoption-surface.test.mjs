@@ -8,6 +8,7 @@ const readme = read('README.md')
 const adoption = read('docs/adoption.md')
 const developmentProof = read('docs/development-proof.md')
 const cliDocs = read('docs/cli.md')
+const binaries = read('docs/binaries.md')
 const pkg = JSON.parse(read('package.json'))
 
 describe('public adoption surface', () => {
@@ -38,6 +39,14 @@ describe('public adoption surface', () => {
     assert.match(adoption, /^# Adoption Playbook/m)
     assert.match(adoption, /Design linter for AI-generated frontends/)
     assert.match(adoption, /\[Development proof\]\(development-proof\.md\)/)
+  })
+
+  it('documents standalone binary constraints without replacing the full CLI', () => {
+    assert.match(readme, /\[Standalone binaries\]\(docs\/binaries\.md\)/)
+    assert.match(binaries, /^# Standalone Binaries/m)
+    assert.match(binaries, /The first standalone binary should be a \*\*static-only audit binary\*\*/)
+    assert.match(binaries, /The full CLI stays on npm/)
+    assert.match(binaries, /Chromium should remain an external runtime/)
   })
 
   it('documents proof as actionable development workflow, not only tests', () => {

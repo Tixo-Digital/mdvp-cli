@@ -158,6 +158,12 @@ Observed behavior for `@mdvp/cli@1.34.1`:
 
 The distroless static recipe intentionally optimizes for the second column. Do not use it for `--exact`, `perceive --live`, screenshot capture, video, or authenticated browser sessions.
 
+## Standalone Binaries Vs Containers
+
+The planned standalone binary path is static-only first. It is useful for low-resource CI and restricted runners, but it does not replace the exact/browser container because it cannot provide rendered DOM, `getComputedStyle()`, screenshots, video, or live perception. See [Standalone binaries](binaries.md) for the release artifact plan.
+
+Use the browser container when the result must match default `audit` behavior. Use a future static binary or the current distroless static image only when `source: "static"` is acceptable.
+
 ## Nix And Devbox
 
 The checked-in `devbox.json` pins Node, git, GitHub/GitLab CLIs, jq, and Chromium where the platform supports it. The checked-in `flake.nix` provides native Nix commands for NixOS and non-devbox environments. Use:

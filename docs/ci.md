@@ -125,7 +125,7 @@ Composite action — see [`action/README.md`](../action/README.md) for inputs, o
 
 ## Other CI systems
 
-The CLI is a single static binary contract: `exit 0 = pass`, `exit 1 = fail`, `--json` for machine parsing. Any CI that can run Node can run MDVP.
+The CLI has a stable automation contract: `exit 0 = pass`, `exit 1 = fail`, `--json` for machine parsing. Any CI that can run Node can run MDVP.
 
 | System | How |
 |---|---|
