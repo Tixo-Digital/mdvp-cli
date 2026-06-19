@@ -12,6 +12,20 @@ Works in CI for AI-generated frontends (v0, Bolt, Lovable, Cursor) where visual 
     url: https://preview.myapp.com
 ```
 
+Every run writes a Markdown report to the GitHub Actions job summary. Pull request comments are opt-in because they require write permission:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+
+steps:
+  - uses: Tixo-Digital/mdvp-cli/action@main
+    with:
+      url: https://preview.myapp.com
+      comment_on_pr: 'true'
+```
+
 ### With threshold config
 
 ```yaml
@@ -71,7 +85,23 @@ jobs:
           max_colors: 20
           max_font_families: 2
           min_css_health: 65
+          comment_on_pr: 'true'
 ```
+
+## Inputs
+
+| Input | Description |
+|---|---|
+| `url` | URL to audit |
+| `working_directory` | Directory containing `.mdvprc` threshold config |
+| `fail_on_violation` | Fail the workflow when configured thresholds are violated |
+| `comment_on_pr` | Post or update a PR comment when running on `pull_request` |
+| `max_colors` | Max unique CSS colors |
+| `max_font_families` | Max unique font families |
+| `max_font_sizes` | Max unique font sizes |
+| `min_spacing_grid_pct` | Min percent of spacing values on a 4px grid |
+| `min_css_health` | Minimum CSS health score |
+| `min_overall` | Minimum overall score |
 
 ## Outputs
 

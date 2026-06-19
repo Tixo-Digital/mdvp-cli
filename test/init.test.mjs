@@ -10,6 +10,12 @@ function tempProject() {
   return mkdtempSync(join(tmpdir(), 'mdvp-init-'))
 }
 
+function actionInputNames() {
+  const metadata = readFileSync(new URL('../action/action.yml', import.meta.url), 'utf8')
+  const inputsBlock = metadata.split('\noutputs:')[0].split('\ninputs:')[1]
+  return new Set([...inputsBlock.matchAll(/^  ([a-z][a-z0-9_]*):$/gm)].map((match) => match[1]))
+}
+
 describe('initProject', () => {
   it('creates .mdvprc by default', () => {
     const cwd = tempProject()
@@ -89,5 +95,29 @@ describe('workflowTemplate', () => {
     const workflow = workflowTemplate()
     assert.ok(workflow.includes('vars.MDVP_TARGET_URL'))
     assert.match(workflow, /workflow_dispatch/)
+  })
+
+  it('only passes declared action inputs', () => {
+    const workflow = workflowTemplate()
+    const actionInputs = actionInputNames()
+
+    for (const input of ['url', 'fail_on_violation', 'comment_on_pr']) {
+      assert.ok(workflow.includes(`${input}:`), `workflow should pass ${input}`)
+      assert.ok(actionInputs.has(input), `action should declare ${input}`)
+    }
+  })
+})
+
+describe('GitHub Action metadata', () => {
+  it('wires outputs and writes review-friendly summaries', () => {
+    const metadata = readFileSync(new URL('../action/action.yml', import.meta.url), 'utf8')
+
+    assert.match(metadata, /overall_score:[\s\S]*value: \$\{\{ steps\.audit\.outputs\.overall_score \}\}/)
+    assert.match(metadata, /report_json:[\s\S]*value: \$\{\{ steps\.audit\.outputs\.report_json \}\}/)
+    assert.match(metadata, /GITHUB_STEP_SUMMARY/)
+    assert.match(metadata, /actions\/github-script@v7/)
+    assert.match(metadata, /mdvp-cli-action-report/)
+    assert.match(metadata, /violation_count=\$VIOLATIONS/)
+    assert.match(metadata, /name: Enforce thresholds/)
   })
 })
