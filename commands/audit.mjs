@@ -7,7 +7,6 @@ import { cmdAuditCloud } from './audit-cloud.mjs'
 import { cmdAuditSwarm } from './audit-swarm.mjs'
 
 export async function cmdAudit(domain, opts) {
-  domain = parseDomain(domain)
   const conflict = checkConflicts(opts, AUDIT_FLAG_CONFLICTS)
   if (conflict) {
     console.error(`${RED}${conflict}${R}`)
@@ -15,7 +14,8 @@ export async function cmdAudit(domain, opts) {
   }
 
   const source = selectAuditSource(opts)
-  if (source === "cloud") return cmdAuditCloud(domain, opts)
-  if (source === "swarm") return cmdAuditSwarm(domain, opts)
+  const auditDomain = parseDomain(domain)
+  if (source === "cloud") return cmdAuditCloud(auditDomain, opts)
+  if (source === "swarm") return cmdAuditSwarm(auditDomain, opts)
   return cmdAuditLocal(domain, { ...opts, source: "local" })
 }

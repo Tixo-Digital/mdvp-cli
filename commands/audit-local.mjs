@@ -11,6 +11,23 @@ const CRAWLER_WORKER = join(ENGINE_DIR, 'crawler-worker.mjs')
 const EXTRACT_JS = join(ENGINE_DIR, 'extract.js')
 const DEFAULT_LOCAL_CRAWL_TIMEOUT_MS = 60000
 
+function normalizeLocalAuditTarget(input) {
+  const raw = String(input || '').trim()
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw)
+  const url = new URL(hasScheme ? raw : `https://${raw}`)
+  url.hash = ''
+
+  const display = hasScheme
+    ? `${url.host}${url.pathname === '/' ? '' : url.pathname}${url.search}`
+    : parseDomain(raw)
+
+  return {
+    id: url.host.replace(/^www\./, ''),
+    url: url.href,
+    display,
+  }
+}
+
 function envFlag(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value ?? '').trim().toLowerCase())
 }
@@ -132,8 +149,9 @@ async function installCrawlerDependencies(dir, spawnChild) {
   })
 }
 
-export async function cmdAuditLocal(domain, opts = {}) {
+export async function cmdAuditLocal(input, opts = {}) {
   const { json, raw, text, source = "local" } = opts
+  const target = normalizeLocalAuditTarget(input)
   const runtime = resolveLocalAuditRuntime({ ...opts, source })
   if (runtime.mode === 'error') {
     console.error(`${RED}${runtime.message}${R}`)
@@ -144,9 +162,9 @@ export async function cmdAuditLocal(domain, opts = {}) {
   let result
 
   if (!useBrowser) {
-    process.stderr.write(`${DIM}analyzing https://${domain} with static/cache shortcut...${R}\n`)
+    process.stderr.write(`${DIM}analyzing ${target.url} with static/cache shortcut...${R}\n`)
     const { analyzeStaticUrl } = await import(`${ENGINE_DIR}/static-analyzer.mjs`)
-    result = await analyzeStaticUrl(`https://${domain}`, opts)
+    result = await analyzeStaticUrl(target.url, opts)
     outputSource = "static"
   } else {
     const { spawn } = await import("child_process")
@@ -187,7 +205,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
       }
     }
 
-    process.stderr.write(`${DIM}crawling https://${domain} locally...${R}\n`)
+    process.stderr.write(`${DIM}crawling ${target.url} locally...${R}\n`)
 
     const timeoutMs = normalizeLocalCrawlTimeout(opts.timeout)
     result = await runCrawlerWorker({
@@ -196,7 +214,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
       workerPath: `${dir}/crawler-worker.mjs`,
       env: {
         ...process.env,
-        CRAWL_ONCE: `https://${domain}`,
+        CRAWL_ONCE: target.url,
         CRAWL_ONCE_STDOUT: "1",
         CRAWL_ONCE_TIMEOUT_MS: String(timeoutMs),
         TABS: "1",
@@ -249,7 +267,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
     }
   }
 
-  const site = { id: domain, url: `https://${domain}`, overall_score: adjustedOverall, grade: adjustedGrade, label: null, scores: { breakdown: bd } }
+  const site = { id: target.id, url: target.url, overall_score: adjustedOverall, grade: adjustedGrade, label: null, scores: { breakdown: bd } }
 
   const payload = {
     id: site.id,
@@ -289,7 +307,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
 
   if (text) { console.log(toTextFormat(site, bd)); return payload }
 
-  console.log(`\n${BOLD}${domain}${R}  ${scoreColor(adjustedOverall)}${adjustedGrade}  ${adjustedOverall}/100${R}  ${DIM}${sourceLabel(outputSource)}${R}\n`)
+  console.log(`\n${BOLD}${target.display}${R}  ${scoreColor(adjustedOverall)}${adjustedGrade}  ${adjustedOverall}/100${R}  ${DIM}${sourceLabel(outputSource)}${R}\n`)
   console.log(`  css_health      ${scoreColor(components.css_health.score)}${bar(components.css_health.score)}${R}  ${components.css_health.score}  ${DIM}${components.css_health.unique_colors} colors · ${components.css_health.unique_font_families} fonts · ${components.css_health.spacing_on_grid_pct}% on grid${R}`)
   console.log(`  visual_quality  ${scoreColor(components.visual_quality.score)}${bar(components.visual_quality.score)}${R}  ${components.visual_quality.score}`)
   console.log(`  structure       ${scoreColor(components.structure.score)}${bar(components.structure.score)}${R}  ${components.structure.score}`)
@@ -332,4 +350,4 @@ export async function cmdAuditLocal(domain, opts = {}) {
   return payload
 }
 
-export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }
+export { DEFAULT_LOCAL_CRAWL_TIMEOUT_MS, cacheShortcutsEnabled, installCrawlerDependencies, normalizeLocalAuditTarget, normalizeLocalCrawlTimeout, resolveLocalAuditRuntime, runCrawlerWorker, terminateCrawlerChild }
