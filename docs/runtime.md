@@ -28,8 +28,12 @@ Modes:
 
 - `audit`: rendered DOM audit through the browser path.
 - `audit --exact`: explicit alias for the default rendered DOM audit.
+- `MDVP_BROWSER_URL=http://127.0.0.1:9222 audit <url>`: rendered DOM audit through a Chrome instance you started and logged into.
+- `MDVP_BROWSER_WS_ENDPOINT=ws://127.0.0.1:9222/devtools/browser/<id> audit <url>`: same connector path when tooling exposes the websocket directly.
 - `MDVP_USE_CACHE=1 audit --fast`: static/cache shortcut, no Chromium.
 - `perceive` and screenshot-producing flows: full browser path.
+
+Authenticated-page scoring uses the same exact browser extractor as default `audit`. The only runtime difference is browser ownership: MDVP connects to the supplied DevTools endpoint and disconnects when finished, instead of launching and closing its own headless Chromium. It still opens a new page and extracts metrics locally; cookies and storage remain in the browser profile. See [Authenticated page scoring](authenticated-scoring.md).
 
 Rejected shortcuts:
 

@@ -82,6 +82,26 @@ engine/scorer.mjs           — scores 12 categories, groups into 4 components
 
 No API key is required. Static output is deterministic for the same fetched HTML/CSS. Exact browser output is deterministic for the same rendered DOM snapshot.
 
+For authenticated local or staging pages, the same exact crawler can connect to a Chrome instance that the developer started with DevTools remote debugging:
+
+```
+MDVP_BROWSER_URL=http://127.0.0.1:9222
+ │
+ ▼
+developer-owned Chrome profile  — already logged in, loopback DevTools only
+ │
+ ▼
+engine/crawler-worker.mjs       — puppeteer.connect(), opens a new page
+ │
+ ▼
+engine/extract.js               — local DOM/computed CSS extraction
+ │
+ ▼
+engine/scorer.mjs               — local scoring, normal audit output
+```
+
+MDVP disconnects from that browser when the audit finishes instead of closing it. Cookies, local storage, request headers, and passwords remain in the browser profile and are not submitted by default. See [Authenticated page scoring](authenticated-scoring.md) for setup and limitations.
+
 ### Signal registry
 
 The `originality` score is driven by a directory of independent detectors —

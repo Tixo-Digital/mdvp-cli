@@ -24,6 +24,9 @@ npx @mdvp/cli audit myapp.com --swarm
 
 # CI — local audit + enforce .mdvprc thresholds, exit 1 on violation
 npx @mdvp/cli audit myapp.com --check
+
+# Authenticated local/staging page — connect to Chrome you already logged into
+MDVP_BROWSER_URL=http://127.0.0.1:9222 npx @mdvp/cli audit http://localhost:3000/dashboard --json
 ```
 
 Flags:
@@ -96,6 +99,30 @@ Flags:
 | `--json` | Emit a stable machine-readable summary |
 
 `init` never requires an API key. Existing files are skipped unless `--force` is set. When `--github-action` is used without `--url`, the workflow reads a repository variable named `MDVP_TARGET_URL` or a manual workflow input named `url`.
+
+## Authenticated pages
+
+Default `audit` can score pages behind login by connecting the local crawler to a Chrome instance you started with DevTools remote debugging. This is useful for SaaS dashboards, private staging apps, preview URLs, and local app routes that need cookies or local storage.
+
+```bash
+mkdir -p /tmp/mdvp-auth-profile
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  --remote-debugging-address=127.0.0.1 \
+  --remote-debugging-port=9222 \
+  --user-data-dir=/tmp/mdvp-auth-profile
+
+# Sign in through that Chrome window, then:
+MDVP_BROWSER_URL=http://127.0.0.1:9222 npx @mdvp/cli audit http://localhost:3000/dashboard --json
+```
+
+Security boundary:
+
+- Extraction and scoring stay local for default `audit`.
+- Cookies, local storage, passwords, and request headers are not printed or POSTed by default.
+- Use a dedicated browser profile and bind remote debugging to `127.0.0.1`.
+- Do not use `--swarm`, `submit`, or hosted dataset commands for private pages.
+
+See [Authenticated page scoring](authenticated-scoring.md) for the fixture smoke and connector limitations.
 
 ## Compare
 
@@ -212,6 +239,8 @@ The CLI reads (in order, last-wins):
 | `PUPPETEER_EXECUTABLE_PATH` | Use an existing Chrome / Chromium instead of the bundled one |
 | `PUPPETEER_CACHE_DIR` | Override the Puppeteer download location |
 | `MDVP_PUPPETEER_ARGS` | JSON array of extra Chromium flags (e.g. `["--no-sandbox"]`) |
+| `MDVP_BROWSER_URL` | Connect exact local audit to a local Chrome DevTools HTTP endpoint, for example `http://127.0.0.1:9222` |
+| `MDVP_BROWSER_WS_ENDPOINT` | Connect exact local audit to a Chrome DevTools websocket endpoint |
 | `NO_COLOR` | Disable ANSI color in CLI output |
 
 ## Exit codes
