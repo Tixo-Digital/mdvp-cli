@@ -142,6 +142,12 @@ describe('new anti-pattern signals', () => {
     assert.equal(find('gradient-background').test({ gradientTextCount: 3 }, ctx), null)
   })
 
+  it('glassmorphism-overuse fires on repeated backdrop-blurred surfaces', () => {
+    assert.equal(find('glassmorphism-overuse').test({ backdropBlurCount: 2 }, ctx), null)
+    assert.equal(find('glassmorphism-overuse').test({ backdropBlurCount: 3 }, ctx).penalty, 6)
+    assert.ok(find('glassmorphism-overuse').test({ backdropBlurCount: 6 }, ctx))
+  })
+
   it('generic-marketing-copy fires on repeated generic phrases', () => {
     assert.equal(find('generic-marketing-copy').test({ genericTextCount: 1 }, ctx), null)
     assert.ok(find('generic-marketing-copy').test({ genericTextCount: 2 }, ctx))

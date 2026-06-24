@@ -52,6 +52,7 @@ A directory of independent detectors — [`engine/signals/`](../engine/signals/)
 | `status-dot` | Decorative green "online" dots implying fake live state |
 | `gradient-text` | Gradient-filled headlines (`background-clip: text`) |
 | `gradient-background` | Repeated or layered gradient backgrounds / mesh-gradient decoration |
+| `glassmorphism-overuse` | Repeated `backdrop-filter` frosted-glass surfaces |
 | `generic-marketing-copy` | Repeated broad phrases such as "revolutionize" or "next-generation" |
 | `sparse-content` | Placeholder page, very few elements |
 | `no-design-tokens` | Fewer than ~5 CSS custom properties |

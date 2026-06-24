@@ -18,6 +18,7 @@ import eyebrowChip from './eyebrow-chip.mjs'
 import statusDot from './status-dot.mjs'
 import gradientText from './gradient-text.mjs'
 import gradientBackground from './gradient-background.mjs'
+import glassmorphismOveruse from './glassmorphism-overuse.mjs'
 import emojiIcons from './emoji-icons.mjs'
 import genericMarketingCopy from './generic-marketing-copy.mjs'
 
@@ -37,6 +38,7 @@ export const SIGNALS = [
   statusDot,
   gradientText,
   gradientBackground,
+  glassmorphismOveruse,
   emojiIcons,
   genericMarketingCopy,
 ]
