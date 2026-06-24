@@ -54,6 +54,9 @@ MDVP gives you numbers on the page structure and design system. The default audi
 # Score any URL locally with rendered browser evidence
 npx @mdvp/cli audit myapp.com
 
+# Check local first-run prerequisites without crawling
+npx @mdvp/cli doctor
+
 # Make the default rendered browser path explicit in scripts
 npx @mdvp/cli audit myapp.com --exact
 

@@ -71,6 +71,14 @@ MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 
 If `cargo` is available, that first static shortcut may compile the Rust analyzer once into `~/.mdvp/native/mdvp-static`; subsequent static audits reuse that binary.
 
+Before a first audit in a new shell, CI runner, or container, run:
+
+```bash
+npx @mdvp/cli doctor
+```
+
+`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites.
+
 ## Verify
 
 ```bash
