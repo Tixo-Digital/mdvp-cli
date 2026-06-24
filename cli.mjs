@@ -16,6 +16,7 @@ import { cmdLogin, cmdBalance } from './commands/auth.mjs'
 import { cmdHire, cmdRecrawl, cmdSubmit } from './commands/hire.mjs'
 import { cmdInit } from './commands/init.mjs'
 import { cmdDiff } from './commands/diff.mjs'
+import { cmdDoctor } from './commands/doctor.mjs'
 
 async function main() {
   const argv = process.argv.slice(2)
@@ -85,6 +86,8 @@ async function main() {
     await cmdLogin()
   } else if (cmd === "init") {
     await cmdInit(opts)
+  } else if (cmd === "doctor") {
+    await cmdDoctor(opts)
   } else if (cmd === "audit" && arg1) {
     await cmdAudit(arg1, opts)
   } else if (cmd === "submit" && arg1) {

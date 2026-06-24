@@ -100,6 +100,19 @@ Flags:
 
 `init` never requires an API key. Existing files are skipped unless `--force` is set. When `--github-action` is used without `--url`, the workflow reads a repository variable named `MDVP_TARGET_URL` or a manual workflow input named `url`.
 
+## Doctor
+
+Check local first-run prerequisites without crawling a URL, calling mdvp.dev, or downloading Chromium.
+
+```bash
+npx @mdvp/cli doctor
+npx @mdvp/cli doctor --json
+```
+
+`doctor` checks Node.js version, npm availability, browser env overrides, common Chrome/Chromium executable paths, Puppeteer cache writability, existing local crawler dependencies, `MDVP_USE_CACHE`, and optional cargo availability for the native static analyzer. Text output is stable for logs; `--json` returns the same check list for scripts.
+
+Exit 0 means no blocking first-run failures were found. Warnings are advisory, such as "Puppeteer will be installed on first exact audit" or "no system Chrome found; Puppeteer may use its bundled browser."
+
 ## Authenticated pages
 
 Default `audit` can score pages behind login by connecting the local crawler to a Chrome instance you started with DevTools remote debugging. This is useful for SaaS dashboards, private staging apps, preview URLs, and local app routes that need cookies or local storage.
