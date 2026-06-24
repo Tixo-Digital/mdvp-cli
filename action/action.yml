@@ -98,20 +98,46 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working_directory }}
       run: |
-        set -e
-        RESULT=$(npx --yes @mdvp/cli@latest audit "${{ inputs.url }}" --exact --check --json 2>/tmp/mdvp-stderr.txt || true)
+        set +e
+        npx --yes @mdvp/cli@latest audit "${{ inputs.url }}" --exact --check --json > /tmp/mdvp-report.json 2>/tmp/mdvp-stderr.txt
         EXIT_CODE=$?
+        set -e
 
-        echo "overall_score=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String(d.overall_score??''))")" >> $GITHUB_OUTPUT
-        echo "grade=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(d.grade??'')")" >> $GITHUB_OUTPUT
-        echo "css_health_score=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String(d.components?.css_health?.score??''))")" >> $GITHUB_OUTPUT
-        echo "violations=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(JSON.stringify(d.violations??[]))")" >> $GITHUB_OUTPUT
+        if ! node -e "JSON.parse(require('fs').readFileSync('/tmp/mdvp-report.json', 'utf8'))" 2>/tmp/mdvp-json-error.txt; then
+          echo "::error::MDVP audit did not produce valid JSON output."
+          if [ -s /tmp/mdvp-stderr.txt ]; then
+            echo "::group::MDVP Crawler Output"
+            cat /tmp/mdvp-stderr.txt
+            echo "::endgroup::"
+          fi
+          if [ -s /tmp/mdvp-report.json ]; then
+            echo "::group::MDVP Raw Output"
+            cat /tmp/mdvp-report.json
+            echo "::endgroup::"
+          fi
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            exit 1
+          fi
+          exit "$EXIT_CODE"
+        fi
 
-        # Write report to a temp file for the output (multiline safe)
-        echo "$RESULT" > /tmp/mdvp-report.json
-        echo "report_json<<EOF" >> $GITHUB_OUTPUT
+        node <<'NODE' >> "$GITHUB_OUTPUT"
+        const { readFileSync } = require('fs');
+        const report = JSON.parse(readFileSync('/tmp/mdvp-report.json', 'utf8'));
+        const output = {
+          overall_score: report.overall_score ?? '',
+          grade: report.grade ?? '',
+          css_health_score: report.components?.css_health?.score ?? '',
+          violations: JSON.stringify(report.violations ?? []),
+        };
+        for (const [name, value] of Object.entries(output)) {
+          console.log(`${name}=${value}`);
+        }
+        NODE
+
+        echo 'report_json<<EOF' >> $GITHUB_OUTPUT
         cat /tmp/mdvp-report.json >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
 
         # Print summary to workflow log
         echo "::group::MDVP Design Quality Report"
@@ -187,8 +213,13 @@ runs:
           echo "::endgroup::"
         fi
 
-        VIOLATIONS=$(echo $RESULT | node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf-8')); process.stdout.write(String((d.violations??[]).length))" 2>/dev/null || echo "0")
+        VIOLATIONS=$(node -e 'const d=JSON.parse(require("fs").readFileSync("/tmp/mdvp-report.json","utf8")); process.stdout.write(String((d.violations??[]).length))' 2>/dev/null || echo "0")
         echo "violation_count=$VIOLATIONS" >> $GITHUB_OUTPUT
+
+        if [ "$EXIT_CODE" -ne 0 ] && [ "$VIOLATIONS" = "0" ]; then
+          echo "::error::MDVP audit exited with code $EXIT_CODE."
+          exit "$EXIT_CODE"
+        fi
 
     - name: Comment on pull request
       if: ${{ inputs.comment_on_pr == 'true' && github.event_name == 'pull_request' }}

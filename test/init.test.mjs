@@ -120,4 +120,18 @@ describe('GitHub Action metadata', () => {
     assert.match(metadata, /violation_count=\$VIOLATIONS/)
     assert.match(metadata, /name: Enforce thresholds/)
   })
+
+  it('fails clearly when the audit command does not emit JSON', () => {
+    const metadata = readFileSync(new URL('../action/action.yml', import.meta.url), 'utf8')
+    const auditLine = metadata
+      .split('\n')
+      .find((line) => line.includes('npx --yes @mdvp/cli@latest audit'))
+
+    assert.ok(auditLine)
+    assert.ok(auditLine.includes('> /tmp/mdvp-report.json'))
+    assert.equal(auditLine.includes('|| true'), false)
+    assert.match(metadata, /MDVP audit did not produce valid JSON output/)
+    assert.match(metadata, /MDVP Raw Output/)
+    assert.match(metadata, /EXIT_CODE=\$\?/)
+  })
 })
