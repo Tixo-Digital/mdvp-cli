@@ -77,7 +77,7 @@ Before a first audit in a new shell, CI runner, or container, run:
 npx @mdvp/cli doctor
 ```
 
-`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites.
+`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites. For CI preflight scripts, `npx @mdvp/cli doctor --json` includes a stable `recommendations` array with remediation messages plus command or environment hints for every warning or failure.
 
 ## Verify
 

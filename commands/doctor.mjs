@@ -63,6 +63,71 @@ function addCheck(checks, status, id, label, message, detail = null) {
   checks.push({ id, label, status, message, ...(detail ? { detail } : {}) })
 }
 
+function recommendationForCheck(check, context) {
+  const severity = check.status === 'fail' ? 'fail' : 'warn'
+  const base = { id: check.id, severity, check: check.id }
+  switch (check.id) {
+    case 'node':
+      return {
+        ...base,
+        message: `Install Node.js ${REQUIRED_NODE_MAJOR}+ before running MDVP.`,
+        command: 'node --version',
+      }
+    case 'npm':
+      return {
+        ...base,
+        message: 'Install npm or use a Node.js distribution that includes npm.',
+        command: 'npm --version',
+      }
+    case 'cargo':
+      return {
+        ...base,
+        message: 'Install Rust cargo only if you want the native static analyzer; exact browser audits do not require it.',
+        command: 'cargo --version',
+      }
+    case 'browser':
+      return {
+        ...base,
+        message: context.browserEnv.executablePath
+          ? 'Fix PUPPETEER_EXECUTABLE_PATH or unset it so MDVP can find another browser.'
+          : 'Install Chrome/Chromium, set PUPPETEER_EXECUTABLE_PATH, or allow Puppeteer to download Chromium on first exact audit.',
+        env: context.browserEnv.executablePath
+          ? { PUPPETEER_EXECUTABLE_PATH: context.browserEnv.executablePath }
+          : { PUPPETEER_EXECUTABLE_PATH: '<absolute path to Chrome or Chromium>' },
+      }
+    case 'puppeteer-cache':
+      return {
+        ...base,
+        message: 'Set PUPPETEER_CACHE_DIR to a writable directory before the first exact browser audit.',
+        env: { PUPPETEER_CACHE_DIR: context.browserEnv.puppeteerCacheDir },
+      }
+    case 'crawler-deps':
+      return {
+        ...base,
+        message: 'Run the first exact audit once to let MDVP install local crawler dependencies.',
+        command: 'npx @mdvp/cli audit myapp.com',
+      }
+    case 'static-shortcut':
+      return {
+        ...base,
+        message: 'No action needed for exact audits; set MDVP_USE_CACHE=1 only when you intentionally want the approximate static shortcut.',
+        env: { MDVP_USE_CACHE: '1' },
+        command: 'MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast',
+      }
+    default:
+      return {
+        ...base,
+        message: check.message,
+      }
+  }
+}
+
+function createDoctorRecommendations(checks, context) {
+  return checks
+    .filter((check) => check.status !== 'pass')
+    .map((check) => recommendationForCheck(check, context))
+}
+
 function createDoctorReport(options = {}) {
   const env = options.env || process.env
   const platform = options.platform || process.platform
@@ -170,6 +235,7 @@ function createDoctorReport(options = {}) {
 
   const blocking = checks.filter((check) => check.status === 'fail')
   const ok = blocking.length === 0
+  const recommendations = createDoctorRecommendations(checks, { browserEnv })
   return {
     ok,
     version: VERSION,
@@ -197,6 +263,7 @@ function createDoctorReport(options = {}) {
       puppeteerInstalled,
     },
     checks,
+    recommendations,
   }
 }
 
@@ -212,7 +279,15 @@ function formatDoctorText(report) {
   lines.push(report.ok
     ? 'Result: ready for exact browser audits.'
     : 'Result: exact browser audits need attention before first run.')
-  if (!report.staticShortcutReady) {
+  if (report.recommendations?.length) {
+    lines.push('')
+    lines.push('Next:')
+    for (const recommendation of report.recommendations) {
+      lines.push(`  ${recommendation.severity.padEnd(4)} ${recommendation.check}: ${recommendation.message}`)
+    }
+  }
+  const hasStaticShortcutRecommendation = report.recommendations?.some((recommendation) => recommendation.id === 'static-shortcut')
+  if (!report.staticShortcutReady && !hasStaticShortcutRecommendation) {
     lines.push('Static shortcut: set MDVP_USE_CACHE=1 and pass --fast when you intentionally want approximate no-browser analysis.')
   }
   return `${lines.join('\n')}\n`
@@ -228,6 +303,7 @@ async function cmdDoctor(opts = {}) {
 
 export {
   REQUIRED_NODE_MAJOR,
+  createDoctorRecommendations,
   createDoctorReport,
   formatDoctorText,
   cmdDoctor,
