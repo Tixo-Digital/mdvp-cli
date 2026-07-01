@@ -114,6 +114,7 @@ Default audit uses Puppeteer for rendered DOM and computed style evidence, group
 - [Install](docs/install.md) — requirements, install, first run, troubleshooting
 - [CLI commands](docs/cli.md) — every flag, every subcommand, exit codes
 - [Scoring](docs/scoring.md) — what the four components measure, the signal registry
+- [Signal catalog](docs/signals.md) — every generated-UI detector, evidence surface, and remediation path
 - [DESIGN.md compliance](docs/design-md.md) — diff audited page metrics against your design system
 - [Authenticated page scoring](docs/authenticated-scoring.md) — local Chrome session connector prototype and privacy model
 - [CI enforcement](docs/ci.md) — `.mdvprc`, GitHub Action, exit codes, other CI systems
@@ -137,7 +138,7 @@ npx @mdvp/cli badge myapp.com
 
 ## Contributing
 
-Bug reports and feature requests: [GitHub Issues](https://github.com/Tixo-Digital/mdvp-cli/issues). Code and signal detectors: see [CONTRIBUTING.md](CONTRIBUTING.md). Adding a signal is a one-file change — see [the development guide](docs/development.md#adding-a-signal).
+Bug reports and feature requests: [GitHub Issues](https://github.com/Tixo-Digital/mdvp-cli/issues). Code and signal detectors: see [CONTRIBUTING.md](CONTRIBUTING.md). New generated-UI detectors should start with the [signal catalog](docs/signals.md) and the [development guide](docs/development.md#adding-a-signal).
 
 ## Citing
 
