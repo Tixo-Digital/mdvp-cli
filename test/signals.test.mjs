@@ -153,4 +153,24 @@ describe('new anti-pattern signals', () => {
     assert.ok(find('generic-marketing-copy').test({ genericTextCount: 2 }, ctx))
     assert.equal(find('generic-marketing-copy').test({ genericTextCount: 4 }, ctx).penalty, 15)
   })
+
+  it('centered-max-width-layout fires on repeated centered page shells', () => {
+    assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 1 }, ctx), null)
+    assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 3 }, ctx), null)
+    assert.ok(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 4 }, ctx))
+    assert.equal(
+      applySignals({ centeredMaxWidthContainerCount: 4 }, ctx).matched
+        .find((m) => m.id === 'centered-max-width-layout').penalty,
+      8,
+    )
+    assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 8 }, ctx).penalty, 12)
+  })
+
+  it('centered-max-width-layout ignores utility/tool pages', () => {
+    const utilityCtx = { ...ctx, utility: true }
+    assert.equal(
+      find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 8 }, utilityCtx),
+      null,
+    )
+  })
 })

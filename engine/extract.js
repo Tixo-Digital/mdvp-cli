@@ -11,10 +11,12 @@
     backdropBlurCount = 0, animationCount = 0, gradientCount = 0,
     emptyLinks = 0, imagesWithoutAlt = 0, maxLineLength = 0, genericTextCount = 0,
     pulseAnimationCount = 0, gradientTextCount = 0, gradientBackgroundCount = 0,
-    gradientBackgroundLayerCount = 0, statusDotCount = 0;
+    gradientBackgroundLayerCount = 0, statusDotCount = 0,
+    centeredMaxWidthContainerCount = 0;
 
   const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
   const genericPhrases = ['lorem ipsum', 'your amazing', 'get started today', 'welcome to our', 'we are a team', 'our mission is', 'revolutionize', 'cutting-edge', 'next-generation', 'world-class'];
+  const centeredTags = new Set(['article', 'div', 'footer', 'header', 'main', 'nav', 'section']);
 
   for (const el of elements) {
     const cs = getComputedStyle(el);
@@ -25,6 +27,40 @@
 
     const tag = el.tagName.toLowerCase();
     if (tag === 'div' || tag === 'span') divSpanCount++;
+
+    // Centered max-width shells: repeated `max-w-* mx-auto` page sections.
+    // Count only explicit layout containers so a single article/content wrapper
+    // does not look like a whole-page layout pattern.
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const maxWidth = parseFloat(cs.maxWidth);
+    const centeredWhitespace =
+      viewportWidth > 0 && Math.abs(rect.left - (viewportWidth - rect.right)) <= 32;
+    const hasSideGutters = viewportWidth > 0 && viewportWidth - rect.width >= 48;
+    const layoutDisplay = ['block', 'flex', 'grid'].includes(cs.display);
+    const explicitMaxWidth = Number.isFinite(maxWidth) && maxWidth >= 560 && maxWidth <= 1320;
+    if (
+      viewportWidth >= 900 &&
+      centeredTags.has(tag) &&
+      layoutDisplay &&
+      explicitMaxWidth &&
+      rect.width >= 560 &&
+      hasSideGutters &&
+      centeredWhitespace
+    ) {
+      const parent = el.parentElement;
+      const parentRect = parent ? parent.getBoundingClientRect() : null;
+      const parentCs = parent ? getComputedStyle(parent) : null;
+      const parentMaxWidth = parentCs ? parseFloat(parentCs.maxWidth) : NaN;
+      const parentIsSameShell =
+        parentRect &&
+        parentCs &&
+        Number.isFinite(parentMaxWidth) &&
+        parentMaxWidth >= 560 &&
+        parentMaxWidth <= 1320 &&
+        Math.abs(parentRect.width - rect.width) <= 16 &&
+        Math.abs(parentRect.left - rect.left) <= 16;
+      if (!parentIsSameShell) centeredMaxWidthContainerCount++;
+    }
 
     // Colors
     const color = cs.color, bg = cs.backgroundColor;
@@ -323,6 +359,7 @@
     gradientBackgroundCount,
     gradientBackgroundLayerCount,
     statusDotCount,
+    centeredMaxWidthContainerCount,
     eyebrowCount,
   };
 })();
