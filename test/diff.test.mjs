@@ -5,7 +5,10 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 
 import {
+  checkDiff,
+  cmdDiff,
   diffSnapshots,
+  formatDiffCheckText,
   formatDiffText,
   loadSnapshot,
   normalizeSnapshot,
@@ -68,6 +71,14 @@ const after = {
       ux_patterns: 78,
       contentDepth: 55,
     },
+  },
+}
+
+const afterNoComponentRegression = {
+  ...after,
+  components: {
+    ...after.components,
+    visual_quality: { score: 72 },
   },
 }
 
@@ -140,6 +151,38 @@ describe('diffSnapshots', () => {
     })
   })
 
+  it('passes check mode when overall and component scores do not regress', () => {
+    const check = checkDiff(diffSnapshots(before, afterNoComponentRegression))
+
+    assert.equal(check.ok, true)
+    assert.equal(check.status, 'pass')
+    assert.equal(check.policy, 'overall-or-component-regression')
+    assert.deepEqual(check.regressions, [])
+  })
+
+  it('fails check mode on overall or component regressions', () => {
+    const regressed = {
+      ...after,
+      overall_score: 66,
+      components: {
+        ...after.components,
+        css_health: { score: 59 },
+        structure: { score: 79 },
+      },
+    }
+    const check = checkDiff(diffSnapshots(before, regressed))
+
+    assert.equal(check.ok, false)
+    assert.equal(check.status, 'fail')
+    assert.equal(check.regressionCount, 4)
+    assert.deepEqual(check.regressions.map((item) => item.key), [
+      'overall',
+      'css_health',
+      'visual_quality',
+      'structure',
+    ])
+  })
+
   it('formats text output without enforcing thresholds', () => {
     const output = stripAnsi(formatDiffText(diffSnapshots(before, after)))
 
@@ -147,6 +190,14 @@ describe('diffSnapshots', () => {
     assert.match(output, /Overall\s+68 -> 74\s+\+6/)
     assert.match(output, /css_health\s+61 -> 70\s+\+9/)
     assert.match(output, /Color\s+55 -> 68\s+\+13/)
+  })
+
+  it('formats check status as a single script-friendly line', () => {
+    const passing = stripAnsi(formatDiffCheckText(checkDiff(diffSnapshots(before, afterNoComponentRegression))))
+    const failing = stripAnsi(formatDiffCheckText(checkDiff(diffSnapshots(after, before))))
+
+    assert.match(passing, /Check: PASS no overall\/component regressions/)
+    assert.match(failing, /Check: FAIL 4 overall\/component regressions/)
   })
 })
 
@@ -163,5 +214,33 @@ describe('loadSnapshot', () => {
 
     const malformed = tempFile('bad.json', '{bad json')
     assert.throws(() => loadSnapshot(malformed), /malformed JSON/)
+  })
+})
+
+describe('cmdDiff', () => {
+  it('returns JSON check metadata and sets exitCode on check failure', async () => {
+    const beforePath = tempFile('before.json', JSON.stringify(before))
+    const afterPath = tempFile('after.json', JSON.stringify({
+      ...after,
+      overall_score: 60,
+    }))
+    const originalExitCode = process.exitCode
+    const logs = []
+    const originalLog = console.log
+    console.log = (value) => logs.push(value)
+    process.exitCode = undefined
+
+    try {
+      const result = await cmdDiff(beforePath, afterPath, { json: true, check: true })
+
+      assert.equal(process.exitCode, 1)
+      assert.equal(result.check.ok, false)
+      assert.equal(result.check.regressions[0].key, 'overall')
+      const parsed = JSON.parse(logs[0])
+      assert.equal(parsed.check.policy, 'overall-or-component-regression')
+    } finally {
+      console.log = originalLog
+      process.exitCode = originalExitCode
+    }
   })
 })
