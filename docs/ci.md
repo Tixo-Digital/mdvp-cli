@@ -38,6 +38,8 @@ jobs:
 
 The action runs the exact browser audit locally on the runner. No screenshot or DOM data is sent anywhere by default. If you intentionally want the lower-resource static/cache shortcut, run the CLI directly with `MDVP_USE_CACHE=1 --fast`. Full reference: [`action/README.md`](../action/README.md).
 
+When thresholds fail, the Action writes one GitHub Actions annotation per violation. With `fail_on_violation: 'true'` they are errors and the workflow fails; with `fail_on_violation: 'false'` they are warnings so teams can trial MDVP before enforcing it.
+
 ## Configuration: `.mdvprc`
 
 Drop a `.mdvprc` (or `mdvp.config.json`) in your project root. Both formats are equivalent.
@@ -113,7 +115,7 @@ Exit code is 1; the message is human-readable; `--json` mode is also available f
 
 ## GitHub Action
 
-Composite action — see [`action/README.md`](../action/README.md) for inputs, outputs, and examples. Posts a PR comment with the score breakdown.
+Composite action — see [`action/README.md`](../action/README.md) for inputs, outputs, and examples. It writes a job summary, emits threshold annotations, and can post a PR comment with the score breakdown.
 
 ```yaml
 - uses: Tixo-Digital/mdvp-cli/action@main

@@ -132,6 +132,8 @@ jobs:
 
 Thresholds are checked only when explicitly set (via `.mdvprc` or action inputs). Violations cause the step to fail with exit code 1.
 
+Every threshold violation is also emitted as a GitHub Actions annotation, so it appears directly in the workflow check UI. Set `fail_on_violation: 'false'` to keep those annotations as warnings without failing the workflow.
+
 Default thresholds are conservative — they catch obvious design health issues without blocking normal development.
 
 ## Runtime And Privacy

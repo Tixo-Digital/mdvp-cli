@@ -216,6 +216,28 @@ runs:
         VIOLATIONS=$(node -e 'const d=JSON.parse(require("fs").readFileSync("/tmp/mdvp-report.json","utf8")); process.stdout.write(String((d.violations??[]).length))' 2>/dev/null || echo "0")
         echo "violation_count=$VIOLATIONS" >> $GITHUB_OUTPUT
 
+        if [ "$VIOLATIONS" != "0" ]; then
+          if [ "${{ inputs.fail_on_violation }}" = "true" ]; then
+            MDVP_ANNOTATION_LEVEL=error
+          else
+            MDVP_ANNOTATION_LEVEL=warning
+          fi
+          MDVP_ANNOTATION_LEVEL="$MDVP_ANNOTATION_LEVEL" node - /tmp/mdvp-report.json <<'NODE'
+        const { readFileSync } = require('fs');
+        const report = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+        const level = process.env.MDVP_ANNOTATION_LEVEL === 'error' ? 'error' : 'warning';
+        const escapeValue = (value) => String(value)
+          .replace(/%/g, '%25')
+          .replace(/\r/g, '%0D')
+          .replace(/\n/g, '%0A');
+
+        for (const violation of report.violations ?? []) {
+          const message = violation?.msg ?? String(violation);
+          console.log(`::${level} title=MDVP threshold violation::${escapeValue(message)}`);
+        }
+        NODE
+        fi
+
         if [ "$EXIT_CODE" -ne 0 ] && [ "$VIOLATIONS" = "0" ]; then
           echo "::error::MDVP audit exited with code $EXIT_CODE."
           exit "$EXIT_CODE"
