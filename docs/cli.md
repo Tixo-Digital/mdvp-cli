@@ -109,7 +109,21 @@ npx @mdvp/cli doctor
 npx @mdvp/cli doctor --json
 ```
 
-`doctor` checks Node.js version, npm availability, browser env overrides, common Chrome/Chromium executable paths, Puppeteer cache writability, existing local crawler dependencies, `MDVP_USE_CACHE`, and optional cargo availability for the native static analyzer. Text output is stable for logs; `--json` returns the same check list for scripts.
+`doctor` checks Node.js version, npm availability, browser env overrides, common Chrome/Chromium executable paths, Puppeteer cache writability, existing local crawler dependencies, `MDVP_USE_CACHE`, and optional cargo availability for the native static analyzer. Text output is stable for logs; `--json` returns the same check list for scripts plus a `recommendations` array for every warning or failure.
+
+Each JSON recommendation has stable script-friendly fields:
+
+```json
+{
+  "id": "browser",
+  "severity": "warn",
+  "check": "browser",
+  "message": "Install Chrome/Chromium, set PUPPETEER_EXECUTABLE_PATH, or allow Puppeteer to download Chromium on first exact audit.",
+  "env": {
+    "PUPPETEER_EXECUTABLE_PATH": "<absolute path to Chrome or Chromium>"
+  }
+}
+```
 
 Exit 0 means no blocking first-run failures were found. Warnings are advisory, such as "Puppeteer will be installed on first exact audit" or "no system Chrome found; Puppeteer may use its bundled browser."
 

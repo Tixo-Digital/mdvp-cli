@@ -63,7 +63,7 @@ Start with the local environment check:
 npx @mdvp/cli doctor
 ```
 
-`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites.
+`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites. For CI preflight scripts, `npx @mdvp/cli doctor --json` includes a stable `recommendations` array with remediation messages plus command or environment hints for every warning or failure.
 
 Then run the default exact audit:
 
@@ -89,7 +89,6 @@ MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 ```
 
 If `cargo` is available, that first static shortcut may compile the Rust analyzer once into `~/.mdvp/native/mdvp-static`; subsequent static audits reuse that binary.
-
 ## Verify
 
 ```bash

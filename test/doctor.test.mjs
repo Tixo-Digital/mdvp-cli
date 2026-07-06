@@ -50,6 +50,7 @@ describe('createDoctorReport', () => {
     assert.equal(report.runtime.node.requiredMajor, 18)
     assert.equal(report.runtime.npm.available, true)
     assert.equal(report.browser.configuredExecutable[0].exists, true)
+    assert.deepEqual(report.recommendations, [])
     assert.deepEqual(report.checks.map((check) => check.id), [
       'node',
       'npm',
@@ -76,6 +77,37 @@ describe('createDoctorReport', () => {
     assert.equal(report.checks.find((check) => check.id === 'node').status, 'fail')
     assert.equal(report.checks.find((check) => check.id === 'npm').status, 'fail')
     assert.equal(report.checks.find((check) => check.id === 'browser').status, 'warn')
+    assert.deepEqual(report.recommendations.map((recommendation) => recommendation.id), [
+      'node',
+      'npm',
+      'browser',
+      'crawler-deps',
+      'static-shortcut',
+    ])
+    assert.equal(report.recommendations.find((recommendation) => recommendation.id === 'node').severity, 'fail')
+    assert.equal(report.recommendations.find((recommendation) => recommendation.id === 'browser').severity, 'warn')
+    assert.deepEqual(
+      report.recommendations.find((recommendation) => recommendation.id === 'static-shortcut').env,
+      { MDVP_USE_CACHE: '1' }
+    )
+  })
+
+  it('recommends fixing a configured browser path that is not executable', () => {
+    const chrome = '/missing/chrome'
+    const report = createDoctorReport({
+      env: { PUPPETEER_EXECUTABLE_PATH: chrome },
+      platform: 'darwin',
+      arch: 'arm64',
+      home: '/tmp/mdvp-home',
+      nodeVersion: 'v22.0.0',
+      spawnSync: fakeRunner({ npm: '10.0.0' }),
+      fs: fakeFs(),
+    })
+
+    const browserRecommendation = report.recommendations.find((recommendation) => recommendation.id === 'browser')
+    assert.equal(browserRecommendation.severity, 'warn')
+    assert.match(browserRecommendation.message, /Fix PUPPETEER_EXECUTABLE_PATH/)
+    assert.deepEqual(browserRecommendation.env, { PUPPETEER_EXECUTABLE_PATH: chrome })
   })
 })
 
@@ -96,5 +128,7 @@ describe('formatDoctorText', () => {
     assert.match(text, /pass Node\.js:/)
     assert.match(text, /warn Browser runtime:/)
     assert.match(text, /Result: ready for exact browser audits\./)
+    assert.match(text, /\nNext:\n/)
+    assert.match(text, /warn browser: Install Chrome\/Chromium/)
   })
 })
