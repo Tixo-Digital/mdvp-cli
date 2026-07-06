@@ -154,6 +154,26 @@ describe('new anti-pattern signals', () => {
     assert.equal(find('generic-marketing-copy').test({ genericTextCount: 4 }, ctx).penalty, 15)
   })
 
+  it('centered-max-width-layout fires on repeated centered page shells', () => {
+    assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 1 }, ctx), null)
+    assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 3 }, ctx), null)
+    assert.ok(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 4 }, ctx))
+    assert.equal(
+      applySignals({ centeredMaxWidthContainerCount: 4 }, ctx).matched
+        .find((m) => m.id === 'centered-max-width-layout').penalty,
+      8,
+    )
+    assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 8 }, ctx).penalty, 12)
+  })
+
+  it('centered-max-width-layout ignores utility/tool pages', () => {
+    const utilityCtx = { ...ctx, utility: true }
+    assert.equal(
+      find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 8 }, utilityCtx),
+      null,
+    )
+  })
+
   it('uniform-button-style fires when many controls share one treatment', () => {
     assert.equal(find('uniform-button-style').test({ styledButtonCount: 2, buttonStyleVariantCount: 1, dominantButtonStyleCount: 2, dominantButtonStyleShare: 1 }, ctx), null)
     assert.equal(find('uniform-button-style').test({ styledButtonCount: 3, buttonStyleVariantCount: 1, dominantButtonStyleCount: 3, dominantButtonStyleShare: 1 }, ctx).penalty, 5)
