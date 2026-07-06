@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf
 
 const readme = read('README.md')
 const adoption = read('docs/adoption.md')
+const agentWorkflows = read('docs/agent-workflows.md')
 const developmentProof = read('docs/development-proof.md')
 const cliDocs = read('docs/cli.md')
 const binaries = read('docs/binaries.md')
@@ -39,6 +40,19 @@ describe('public adoption surface', () => {
     assert.match(adoption, /^# Adoption Playbook/m)
     assert.match(adoption, /Design linter for AI-generated frontends/)
     assert.match(adoption, /\[Development proof\]\(development-proof\.md\)/)
+  })
+
+  it('documents agent workflows without overstating design judgment', () => {
+    assert.match(adoption, /\[Agent workflows\]\(agent-workflows\.md\)/)
+    assert.match(agentWorkflows, /^# Agent Workflows/m)
+    assert.match(agentWorkflows, /rendered-DOM linter/)
+    assert.match(agentWorkflows, /npx @mdvp\/cli doctor/)
+    assert.match(agentWorkflows, /npx @mdvp\/cli audit https:\/\/preview\.example\.com --json/)
+    assert.match(agentWorkflows, /npx @mdvp\/cli init --github-action/)
+    assert.match(agentWorkflows, /npx @mdvp\/cli mcp-config/)
+    assert.match(agentWorkflows, /audit_url/)
+    assert.match(agentWorkflows, /perceive_url/)
+    assert.match(agentWorkflows, /Do not claim MDVP proves a design is good or bad universally/)
   })
 
   it('documents standalone binary constraints without replacing the full CLI', () => {
