@@ -17,6 +17,7 @@ import { cmdHire, cmdRecrawl, cmdSubmit } from './commands/hire.mjs'
 import { cmdInit } from './commands/init.mjs'
 import { cmdDiff } from './commands/diff.mjs'
 import { cmdDoctor } from './commands/doctor.mjs'
+import { cmdSignals } from './commands/signals.mjs'
 
 async function main() {
   const argv = process.argv.slice(2)
@@ -98,6 +99,8 @@ async function main() {
     await cmdCompare(arg1, arg2, opts)
   } else if (cmd === "diff") {
     await cmdDiff(arg1, arg2, opts)
+  } else if (cmd === "signals") {
+    await cmdSignals(opts)
   } else if (cmd === "top") {
     await cmdTop(parseInt(arg1 || "10") || 10, false, opts)
   } else if (cmd === "worst") {
