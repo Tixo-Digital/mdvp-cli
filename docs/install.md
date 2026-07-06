@@ -21,10 +21,11 @@ The package is JavaScript plus a small Rust static analyzer source. Default `aud
 npx @mdvp/cli audit myapp.com
 ```
 
-Pinned to a version:
+Resolve the current release, then pin the version you choose in CI scripts:
 
 ```bash
-npx @mdvp/cli@1.31.4 audit myapp.com
+npm view @mdvp/cli version
+npx @mdvp/cli@<version> audit myapp.com
 ```
 
 ### Install globally
@@ -56,12 +57,30 @@ Standalone binary artifacts are being scoped as static-only release assets first
 
 ## First run
 
-The first default audit may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`) if no compatible browser is already available. To skip that download and use your system Chrome instead:
+Start with the local environment check:
+
+```bash
+npx @mdvp/cli doctor
+```
+
+`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites. For CI preflight scripts, `npx @mdvp/cli doctor --json` includes a stable `recommendations` array with remediation messages plus command or environment hints for every warning or failure.
+
+Then run the default exact audit:
+
+```bash
+npx @mdvp/cli audit myapp.com
+```
+
+The default audit uses a real browser and rendered DOM metrics. It does not require an MDVP account, API key, screenshot baseline, or hosted dashboard.
+
+The first exact audit may download Puppeteer's bundled Chromium (~150 MB, cached at `~/.cache/puppeteer/`) if no compatible browser is already available. To skip that download and use your system Chrome instead:
 
 ```bash
 PUPPETEER_EXECUTABLE_PATH=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   npx @mdvp/cli audit myapp.com
 ```
+
+In locked-down CI or corporate networks, set `PUPPETEER_CACHE_DIR` to a writable cache path and `PUPPETEER_DOWNLOAD_BASE_URL` to an internal mirror if browser downloads must come from approved infrastructure.
 
 The static/cache shortcut does not download Chromium. The env var is the actual opt-in; `--fast` makes it visible in scripts:
 
@@ -70,15 +89,6 @@ MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 ```
 
 If `cargo` is available, that first static shortcut may compile the Rust analyzer once into `~/.mdvp/native/mdvp-static`; subsequent static audits reuse that binary.
-
-Before a first audit in a new shell, CI runner, or container, run:
-
-```bash
-npx @mdvp/cli doctor
-```
-
-`doctor` does not crawl a URL or download Chromium. It checks Node.js, npm, browser overrides, common Chrome/Chromium paths, cache writability, static/cache mode, and optional cargo availability, then exits nonzero only for blocking local prerequisites. For CI preflight scripts, `npx @mdvp/cli doctor --json` includes a stable `recommendations` array with remediation messages plus command or environment hints for every warning or failure.
-
 ## Verify
 
 ```bash
@@ -95,6 +105,8 @@ npm i -g @mdvp/cli@latest
 Releases follow [semver](https://semver.org). The [CHANGELOG](../CHANGELOG.md) is the source of truth for breaking changes.
 
 ## Troubleshooting
+
+**Unexpected old version** — avoid copying a stale pinned command. Check the latest version with `npm view @mdvp/cli version`, or use `npx @mdvp/cli@latest audit myapp.com` when reproducibility is less important than freshness.
 
 **Puppeteer download blocked** — default `audit` uses the browser-backed exact path. Set `PUPPETEER_DOWNLOAD_BASE_URL` to an internal mirror, use `PUPPETEER_EXECUTABLE_PATH` to point at an existing browser, or opt into the approximate static/cache shortcut with `MDVP_USE_CACHE=1 --fast`.
 

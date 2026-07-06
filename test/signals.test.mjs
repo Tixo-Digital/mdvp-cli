@@ -153,4 +153,15 @@ describe('new anti-pattern signals', () => {
     assert.ok(find('generic-marketing-copy').test({ genericTextCount: 2 }, ctx))
     assert.equal(find('generic-marketing-copy').test({ genericTextCount: 4 }, ctx).penalty, 15)
   })
+
+  it('uniform-button-style fires when many controls share one treatment', () => {
+    assert.equal(find('uniform-button-style').test({ styledButtonCount: 2, buttonStyleVariantCount: 1, dominantButtonStyleCount: 2, dominantButtonStyleShare: 1 }, ctx), null)
+    assert.equal(find('uniform-button-style').test({ styledButtonCount: 3, buttonStyleVariantCount: 1, dominantButtonStyleCount: 3, dominantButtonStyleShare: 1 }, ctx).penalty, 5)
+    assert.ok(find('uniform-button-style').test({ styledButtonCount: 6, buttonStyleVariantCount: 2, dominantButtonStyleCount: 5, dominantButtonStyleShare: 0.83 }, ctx))
+  })
+
+  it('uniform-button-style stays quiet when controls show hierarchy', () => {
+    assert.equal(find('uniform-button-style').test({ styledButtonCount: 5, buttonStyleVariantCount: 3, dominantButtonStyleCount: 3, dominantButtonStyleShare: 0.6 }, ctx), null)
+    assert.equal(find('uniform-button-style').test({ styledButtonCount: 4, buttonStyleVariantCount: 2, dominantButtonStyleCount: 3, dominantButtonStyleShare: 0.75 }, ctx), null)
+  })
 })

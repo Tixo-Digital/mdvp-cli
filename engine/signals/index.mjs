@@ -21,6 +21,7 @@ import gradientBackground from './gradient-background.mjs'
 import glassmorphismOveruse from './glassmorphism-overuse.mjs'
 import emojiIcons from './emoji-icons.mjs'
 import genericMarketingCopy from './generic-marketing-copy.mjs'
+import uniformButtonStyle from './uniform-button-style.mjs'
 
 /** All registered signals, in declaration order. */
 export const SIGNALS = [
@@ -41,6 +42,7 @@ export const SIGNALS = [
   glassmorphismOveruse,
   emojiIcons,
   genericMarketingCopy,
+  uniformButtonStyle,
 ]
 
 /**

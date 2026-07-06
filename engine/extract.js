@@ -12,6 +12,7 @@
     emptyLinks = 0, imagesWithoutAlt = 0, maxLineLength = 0, genericTextCount = 0,
     pulseAnimationCount = 0, gradientTextCount = 0, gradientBackgroundCount = 0,
     gradientBackgroundLayerCount = 0, statusDotCount = 0;
+  const buttonStyleSignatures = new Map();
 
   const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
   const genericPhrases = ['lorem ipsum', 'your amazing', 'get started today', 'welcome to our', 'we are a team', 'our mission is', 'revolutionize', 'cutting-edge', 'next-generation', 'world-class'];
@@ -115,6 +116,35 @@
       // Generic text
       const lower = text.toLowerCase();
       if (genericPhrases.some(p => lower.includes(p))) genericTextCount++;
+    }
+
+    // Text-bearing button-like controls. Uniform primary/secondary treatment is
+    // a common generated-UI tell, but nav/tool icon buttons should not count.
+    const text = (el.textContent || '').trim();
+    const isTextualControl =
+      (tag === 'button' || tag === 'summary' || tag === 'input' || el.getAttribute('role') === 'button') ||
+      (tag === 'a' && (
+        /btn|button|cta/i.test(typeof el.className === 'string' ? el.className : '') ||
+        (parseFloat(cs.borderRadius) > 1 && (
+          (cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent') ||
+          cs.borderStyle !== 'none'
+        ))
+      ));
+    const hasReadableControlText = text.length >= 2 && text.length <= 40;
+    const isControlSized = rect.width >= 48 && rect.height >= 24;
+    if (isTextualControl && hasReadableControlText && isControlSized) {
+      const signature = [
+        cs.backgroundColor,
+        cs.color,
+        cs.borderColor,
+        cs.borderStyle,
+        cs.borderWidth,
+        cs.borderRadius,
+        cs.fontWeight,
+        Math.round(parseFloat(cs.paddingLeft) || 0),
+        Math.round(parseFloat(cs.paddingRight) || 0),
+      ].join('|');
+      buttonStyleSignatures.set(signature, (buttonStyleSignatures.get(signature) || 0) + 1);
     }
 
     // Empty links
@@ -273,6 +303,9 @@
   const navItems = document.querySelectorAll('nav a, nav button').length;
 
   const sort = (m) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+  const sortedButtonStyles = sort(buttonStyleSignatures);
+  const styledButtonCount = sortedButtonStyles.reduce((sum, [, count]) => sum + count, 0);
+  const dominantButtonStyleCount = sortedButtonStyles[0]?.[1] || 0;
 
   return {
     totalElements: total,
@@ -318,6 +351,10 @@
     letterSpacingAllCaps,
     ctaCount: ctaButtons.length,
     navItemCount: navItems,
+    styledButtonCount,
+    buttonStyleVariantCount: sortedButtonStyles.length,
+    dominantButtonStyleCount,
+    dominantButtonStyleShare: styledButtonCount > 0 ? dominantButtonStyleCount / styledButtonCount : 0,
     pulseAnimationCount,
     gradientTextCount,
     gradientBackgroundCount,
