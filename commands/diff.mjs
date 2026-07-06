@@ -138,6 +138,23 @@ function diffSnapshots(beforeInput, afterInput) {
   }
 }
 
+function checkDiff(diff) {
+  const gatedScopes = new Set(['overall', 'component'])
+  const regressions = diff.changes.filter((item) => (
+    gatedScopes.has(item.scope)
+    && item.delta !== null
+    && item.delta < 0
+  ))
+
+  return {
+    ok: regressions.length === 0,
+    status: regressions.length === 0 ? 'pass' : 'fail',
+    policy: 'overall-or-component-regression',
+    regressionCount: regressions.length,
+    regressions,
+  }
+}
+
 function signed(value) {
   if (value === null) return 'n/a'
   return `${value > 0 ? '+' : ''}${value}`
@@ -182,6 +199,14 @@ function formatDiffText(diff) {
   ].filter((line) => line !== '').join('\n')
 }
 
+function formatDiffCheckText(check) {
+  const color = check.ok ? GREEN : RED
+  const message = check.ok
+    ? 'PASS no overall/component regressions'
+    : `FAIL ${check.regressionCount} overall/component regression${check.regressionCount === 1 ? '' : 's'}`
+  return `\n  Check: ${color}${message}${R}\n`
+}
+
 async function cmdDiff(beforePath, afterPath, opts = {}) {
   if (!beforePath || !afterPath) {
     console.error('Usage: mdvp diff <before.json> <after.json> [--json]')
@@ -196,18 +221,28 @@ async function cmdDiff(beforePath, afterPath, opts = {}) {
     process.exit(3)
   }
 
+  const check = opts.check ? checkDiff(diff) : null
+  const result = check ? { ...diff, check } : diff
+
   if (opts.json) {
-    console.log(JSON.stringify(diff, null, 2))
-    return diff
+    console.log(JSON.stringify(result, null, 2))
+    if (check && !check.ok) process.exitCode = 1
+    return result
   }
 
   console.log(formatDiffText(diff))
-  return diff
+  if (check) {
+    process.stdout.write(formatDiffCheckText(check))
+    if (!check.ok) process.exitCode = 1
+  }
+  return result
 }
 
 export {
+  checkDiff,
   cmdDiff,
   diffSnapshots,
+  formatDiffCheckText,
   formatDiffText,
   loadSnapshot,
   normalizeSnapshot,

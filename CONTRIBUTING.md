@@ -17,7 +17,7 @@ Use `node ./cli.mjs ...` during development to exercise the local checkout.
 
 - Bug fixes in the CLI or scoring engine
 - Scoring calibration — if a site scores wrong, open an issue with the JSON output
-- New vibe-code signals — AI tools update their defaults, the detection needs to keep up
+- New vibe-code signals — AI tools update their defaults, the detection needs to keep up. Start with the [signal catalog](docs/signals.md) so the detector is narrow, explainable, and testable.
 - Docs improvements
 - CI/action reliability improvements
 - Improvements to `engine/crawler-worker.mjs` — the distributed crawler
@@ -43,4 +43,5 @@ The worker source is [`engine/crawler-worker.mjs`](engine/crawler-worker.mjs). I
 
 - `npm test` passes
 - If you changed scoring behaviour, include before/after scores for at least 2 URLs
+- If you added or changed a signal, update [docs/signals.md](docs/signals.md) and include `test/signals.test.mjs` coverage
 - If you changed the engine, `npm pack --dry-run` shows no secrets and only expected files

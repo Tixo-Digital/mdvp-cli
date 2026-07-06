@@ -61,6 +61,8 @@ Useful adoption loops are product artifacts, not star requests:
 - **Agent workflow:** `npx @mdvp/cli mcp` exposes the same audit surface to MCP-compatible coding agents.
 - **Contributor path:** new signal detectors are one-file additions under `engine/signals/`.
 
+For agent-specific operating guidance, use [Agent workflows](agent-workflows.md). It gives coding agents the safe preflight, audit, JSON, CI, and MCP reporting loop without turning MDVP into a vague taste judgment.
+
 ## Distribution Checklist
 
 Before posting or pitching MDVP, prepare a specific artifact:

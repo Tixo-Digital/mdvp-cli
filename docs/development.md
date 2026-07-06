@@ -79,29 +79,34 @@ docs/                  — all documentation
 
 ## Adding a signal
 
-Each AI-pattern detector is one file. The registry is auto-discovered.
+Each AI-pattern detector is one file, and the registry is explicit. Start with the [signal catalog](signals.md) to see the current detectors and the evidence they use.
 
 1. Create `engine/signals/<your-signal>.mjs`:
 
    ```js
    export default {
      id: "your-signal",
+     label: "Short report label",
      penalty: 12,
-     hint: "What this signal means and how to fix it.",
-     detect(metrics, dom) {
-       // Return true if the page matches the pattern
-       return dom.gradientTextCount > 2;
+     weight: 1,
+     rationale:
+       "One sentence explaining why this pattern weakens generated UI quality.",
+
+     test(metrics, ctx) {
+       const count = metrics.yourExtractedCount ?? 0
+       if (count > 2) return { detail: `${count} matching elements` }
+       return null
      },
-   };
+   }
    ```
 
-2. That's it. No registration step — `engine/signals/index.mjs` discovers all `*.mjs` files in the directory.
+2. Import it in `engine/signals/index.mjs` and add it to the `SIGNALS` array.
 
-3. Add a unit test in `test/signals.test.mjs`.
+3. Add unit coverage in `test/signals.test.mjs`.
 
-4. Document the new signal in [`docs/scoring.md`](scoring.md#originality--ai-generated-ui-detection).
+4. Document the new signal in [`docs/signals.md`](signals.md) and update [`docs/scoring.md`](scoring.md#originality--ai-generated-ui-detection) if the signal changes how users should interpret originality.
 
-5. Open a PR. The signal registry CI will check for unlisted detectors (you shouldn't need to edit any other file).
+5. Open a PR with before/after scores for at least 2 URLs if the scoring behaviour changes materially.
 
 ## Adding a CLI command
 

@@ -118,6 +118,10 @@ describe('GitHub Action metadata', () => {
     assert.match(metadata, /actions\/github-script@v7/)
     assert.match(metadata, /mdvp-cli-action-report/)
     assert.match(metadata, /violation_count=\$VIOLATIONS/)
+    assert.match(metadata, /MDVP_ANNOTATION_LEVEL=error/)
+    assert.match(metadata, /MDVP_ANNOTATION_LEVEL=warning/)
+    assert.match(metadata, /MDVP threshold violation/)
+    assert.match(metadata, /replace\(\/%\/g, '%25'\)/)
     assert.match(metadata, /name: Enforce thresholds/)
   })
 
