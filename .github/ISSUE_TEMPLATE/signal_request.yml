@@ -1,0 +1,75 @@
+name: Signal detector request
+description: Suggest a repeatable AI-UI or design-quality pattern for MDVP to detect
+labels: [signal]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for patterns that repeat across generated or low-quality frontends and could become an MDVP signal. Include public, non-sensitive examples when possible.
+
+  - type: textarea
+    id: pattern
+    attributes:
+      label: Pattern to detect
+      description: "Describe the repeated visual or DOM/CSS pattern in one or two sentences."
+      placeholder: "Example: every card uses the same 9999px pill radius, muted gray body copy, and generic gradient CTA treatment."
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Public examples or reproduction
+      description: "Link public URLs, a minimal HTML/CSS fixture, or steps to reproduce the pattern. Do not include private dashboards, secrets, or customer data."
+      placeholder: |
+        - https://example.com/page
+        - Run: npx @mdvp/cli audit https://example.com/page --json
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence from rendered DOM or CSS
+      description: "List concrete signals MDVP could measure, such as computed colors, radii, font families, spacing values, repeated class names, semantic structure, or APCA/contrast symptoms."
+      placeholder: |
+        - 14 of 16 buttons use border-radius: 9999px
+        - 38 unique colors, mostly default Tailwind purple/blue scale
+        - H1 and CTA text are generic across unrelated products
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_detection
+    attributes:
+      label: Expected detector behavior
+      description: "What should MDVP flag, score, or explain when this pattern is present?"
+      placeholder: "Flag as generated-UI radius sameness when more than 70% of interactive controls use pill radii without a matching design token."
+    validations:
+      required: true
+
+  - type: textarea
+    id: false_positive_risk
+    attributes:
+      label: False-positive risks
+      description: "Name legitimate designs that could look similar and should not be penalized."
+      placeholder: "Design systems that intentionally use pill controls for a narrow component set; brand systems with documented gradient tokens."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Can you contribute a fixture or test?
+      options:
+        - Yes, I can open a PR with a fixture/test
+        - I can provide examples but not code
+        - Not sure yet
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: "Optional related tools, prior-art links, screenshots, or benchmark notes."
