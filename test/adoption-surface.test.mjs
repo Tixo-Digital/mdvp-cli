@@ -10,6 +10,8 @@ const agentWorkflows = read('docs/agent-workflows.md')
 const developmentProof = read('docs/development-proof.md')
 const cliDocs = read('docs/cli.md')
 const binaries = read('docs/binaries.md')
+const development = read('docs/development.md')
+const roadmap = read('ROADMAP.md')
 const pkg = JSON.parse(read('package.json'))
 
 describe('public adoption surface', () => {
@@ -110,5 +112,32 @@ describe('public adoption surface', () => {
     ]) {
       assert.ok(pkg.keywords.includes(keyword), `missing keyword: ${keyword}`)
     }
+  })
+
+  it('keeps roadmap claims aligned with shipped adoption features', () => {
+    assert.match(roadmap, /## Shipped in the public CLI/)
+    assert.match(roadmap, /Score badge generator/)
+    assert.match(roadmap, /Snapshot diff/)
+    assert.match(roadmap, /## Current work/)
+    assert.match(roadmap, /## Next public CLI improvements/)
+    assert.equal(
+      /## Next public CLI improvements[\s\S]*Badge generator/.test(roadmap),
+      false,
+      'badge generator should not be listed as future work after shipping',
+    )
+  })
+
+  it('documents local nightly automation before cloud fallback', () => {
+    assert.match(development, /## Local Codex \/ Devbox/)
+    assert.match(development, /local canonical checkout by default/)
+    assert.match(development, /isolated worktree from `origin\/main`/)
+    assert.match(development, /npm ci/)
+    assert.match(development, /npm pack --dry-run/)
+    assert.match(development, /Cloud Codex remains a manual fallback environment/)
+    assert.equal(
+      development.includes('Nightly automation runs in Cloud Codex'),
+      false,
+      'development docs should not describe Cloud Codex as the default nightly runner',
+    )
   })
 })
