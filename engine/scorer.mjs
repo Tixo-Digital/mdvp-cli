@@ -521,6 +521,101 @@ export function gradeForScore(overall) {
   return 'F'
 }
 
+const ACTION_SEVERITY_RANK = { error: 0, warn: 1, info: 2 }
+
+function isActionableDetail(detail) {
+  const text = String(detail ?? '').toLowerCase()
+  return [
+    'limit',
+    'consider',
+    'replace',
+    'consolidate',
+    'standardize',
+    'use ',
+    'target',
+    'missing',
+    'without',
+    'not on',
+    'no ',
+    'poor',
+    'low-contrast',
+    'overflow',
+    'overuse',
+    'generic',
+    'default',
+    'sub-pixel',
+    'inconsistent',
+    'exceed',
+    'below',
+    'too short',
+    'div soup',
+    'cognitive overload',
+    'sparse',
+    'pattern matches',
+  ].some((needle) => text.includes(needle))
+}
+
+function actionSeverity(score, detail) {
+  const text = String(detail ?? '').toLowerCase()
+  if (
+    score < 45 ||
+    text.includes('missing <meta name="viewport">') ||
+    text.includes('no h1') ||
+    text.includes('low-contrast') ||
+    text.includes('console error') ||
+    text.includes('text elements overflow') ||
+    text.includes('content overflow')
+  ) {
+    return 'error'
+  }
+  if (
+    score < 70 ||
+    text.includes('limit') ||
+    text.includes('overuse') ||
+    text.includes('not on') ||
+    text.includes('missing') ||
+    text.includes('without') ||
+    text.includes('generic') ||
+    text.includes('default')
+  ) {
+    return 'warn'
+  }
+  return 'info'
+}
+
+export function buildRemediationActions(breakdowns, limit = 8) {
+  const seen = new Set()
+  const actions = []
+
+  for (const breakdown of breakdowns) {
+    for (const [index, detail] of (breakdown.details || []).entries()) {
+      if (!isActionableDetail(detail)) continue
+      const message = String(detail).trim()
+      const key = `${breakdown.category}:${message}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      actions.push({
+        category: breakdown.category,
+        severity: actionSeverity(breakdown.score, message),
+        message,
+        source: `score:${breakdown.category}`,
+        score: breakdown.score,
+        index,
+      })
+    }
+  }
+
+  return actions
+    .sort((a, b) =>
+      ACTION_SEVERITY_RANK[a.severity] - ACTION_SEVERITY_RANK[b.severity] ||
+      a.score - b.score ||
+      a.category.localeCompare(b.category) ||
+      a.index - b.index
+    )
+    .slice(0, limit)
+    .map(({ index, ...action }) => action)
+}
+
 export function scoreDOMMetrics(metrics, config = {}) {
   const breakdowns = [
     scoreSpacing(metrics),
@@ -556,5 +651,7 @@ export function scoreDOMMetrics(metrics, config = {}) {
     ))
     .slice(0, 5)
 
-  return { overall, grade, breakdown: breakdowns, recommendations }
+  const actions = buildRemediationActions(breakdowns)
+
+  return { overall, grade, breakdown: breakdowns, recommendations, actions }
 }

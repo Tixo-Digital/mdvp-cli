@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  buildRemediationActions,
   scoreDOMMetrics,
   computeEntropyMetrics,
   groupComponents,
@@ -11,12 +12,13 @@ import { MINIMAL_METRICS, GOOD_METRICS, VIBECODED_METRICS } from './fixtures/met
 // scoreDOMMetrics
 // ---------------------------------------------------------------------------
 describe('scoreDOMMetrics — return shape', () => {
-  it('returns overall, grade, breakdown, recommendations', () => {
+  it('returns overall, grade, breakdown, recommendations, actions', () => {
     const result = scoreDOMMetrics(MINIMAL_METRICS)
     assert.ok(typeof result.overall === 'number', 'overall should be a number')
     assert.ok(typeof result.grade === 'string', 'grade should be a string')
     assert.ok(Array.isArray(result.breakdown), 'breakdown should be an array')
     assert.ok(Array.isArray(result.recommendations), 'recommendations should be an array')
+    assert.ok(Array.isArray(result.actions), 'actions should be an array')
   })
 
   it('overall is in 0–100 range', () => {
@@ -87,6 +89,43 @@ describe('scoreDOMMetrics — scoring direction', () => {
     const minMod = minBreak.find(b => b.category === 'modernity').score
     assert.ok(goodMod > minMod,
       `good modernity (${goodMod}) should beat minimal (${minMod})`)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// buildRemediationActions
+// ---------------------------------------------------------------------------
+describe('buildRemediationActions — structured remediation output', () => {
+  it('returns stable action objects for poor scoring details', () => {
+    const result = scoreDOMMetrics(VIBECODED_METRICS)
+    assert.ok(result.actions.length > 0, 'expected remediation actions')
+    for (const action of result.actions) {
+      assert.ok(typeof action.category === 'string', 'category missing')
+      assert.match(action.severity, /^(error|warn|info)$/)
+      assert.ok(typeof action.message === 'string' && action.message.length > 0, 'message missing')
+      assert.equal(action.source, `score:${action.category}`)
+      assert.ok(typeof action.score === 'number', 'score missing')
+      assert.ok(!('index' in action), 'internal sort index should not be exposed')
+    }
+  })
+
+  it('orders actions by severity and category score', () => {
+    const actions = buildRemediationActions([
+      { category: 'a', score: 80, details: ['Consider reducing chromatic colors'] },
+      { category: 'b', score: 35, details: ['No h1 tag'] },
+      { category: 'c', score: 60, details: ['4 font families. Professional limit: 2'] },
+    ])
+    assert.deepEqual(actions.map((a) => a.severity), ['error', 'warn', 'info'])
+    assert.equal(actions[0].category, 'b')
+  })
+
+  it('deduplicates repeated details and respects the limit', () => {
+    const actions = buildRemediationActions([
+      { category: 'spacing', score: 50, details: ['No spacing system', 'No spacing system'] },
+      { category: 'typography', score: 55, details: ['5 font families. Professional limit: 2'] },
+    ], 1)
+    assert.equal(actions.length, 1)
+    assert.equal(actions[0].message, 'No spacing system')
   })
 })
 
