@@ -34,6 +34,7 @@ Signals should prefer false negatives over noisy false positives. A detector tha
 | `glassmorphism-overuse` | [`engine/signals/glassmorphism-overuse.mjs`](../engine/signals/glassmorphism-overuse.mjs) | Repeated backdrop-blurred surfaces | `backdrop-filter` counts | Keep glass effects for purposeful depth, modals, or overlays |
 | `emoji-icons` | [`engine/signals/emoji-icons.mjs`](../engine/signals/emoji-icons.mjs) | Emoji used repeatedly as iconography | Visible emoji count | Use a consistent icon set and reserve emoji for content where appropriate |
 | `generic-marketing-copy` | [`engine/signals/generic-marketing-copy.mjs`](../engine/signals/generic-marketing-copy.mjs) | Repeated broad phrases such as "next-generation" or "revolutionize" | Visible text phrase counts | Write product-specific copy tied to a real audience, task, or outcome |
+| `generic-cta-copy` | [`engine/signals/generic-cta-copy.mjs`](../engine/signals/generic-cta-copy.mjs) | Repeated generic CTA labels such as "Get started" or "Learn more" | Generic button/textual control counts | Rewrite buttons around the specific task, object, or next step |
 
 ## Configuring signals
 

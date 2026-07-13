@@ -154,6 +154,12 @@ describe('new anti-pattern signals', () => {
     assert.equal(find('generic-marketing-copy').test({ genericTextCount: 4 }, ctx).penalty, 15)
   })
 
+  it('generic-cta-copy fires on repeated generic button labels', () => {
+    assert.equal(find('generic-cta-copy').test({ genericButtonTexts: 1 }, ctx), null)
+    assert.ok(find('generic-cta-copy').test({ genericButtonTexts: 2 }, ctx))
+    assert.equal(find('generic-cta-copy').test({ genericButtonTexts: 4 }, ctx).penalty, 12)
+  })
+
   it('centered-max-width-layout fires on repeated centered page shells', () => {
     assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 1 }, ctx), null)
     assert.equal(find('centered-max-width-layout').test({ centeredMaxWidthContainerCount: 3 }, ctx), null)
