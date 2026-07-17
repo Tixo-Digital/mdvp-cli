@@ -10,7 +10,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs test/signals.test.mjs test/signals-command.test.mjs test/design-spec.test.mjs test/conflicts.test.mjs test/source-label.test.mjs test/audit-flags.test.mjs test/init.test.mjs test/doctor.test.mjs test/mcp-version.test.mjs test/badge.test.mjs test/diff.test.mjs test/local-audit-timeout.test.mjs test/adoption-surface.test.mjs test/authenticated-docs.test.mjs test/benchmark-evidence.test.mjs test/crawler-fast-path.test.mjs test/static-analyzer.test.mjs",
+    "test": "node --test test/color-science.test.mjs test/thresholds.test.mjs test/scorer.test.mjs test/signals.test.mjs test/signals-command.test.mjs test/version.test.mjs test/design-spec.test.mjs test/conflicts.test.mjs test/source-label.test.mjs test/audit-flags.test.mjs test/init.test.mjs test/doctor.test.mjs test/mcp-version.test.mjs test/badge.test.mjs test/diff.test.mjs test/local-audit-timeout.test.mjs test/adoption-surface.test.mjs test/authenticated-docs.test.mjs test/benchmark-evidence.test.mjs test/crawler-fast-path.test.mjs test/static-analyzer.test.mjs",
     "test:e2e": "node --test test/crawler-exact-e2e.test.mjs",
     "release:patch": "node scripts/release-version.mjs patch",
     "release:minor": "node scripts/release-version.mjs minor",
