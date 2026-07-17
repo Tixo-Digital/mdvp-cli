@@ -26,6 +26,7 @@ async function main() {
   const positional = argv.filter((a) => !(a.startsWith("--") || /^-[a-zA-Z]$/.test(a)))
   const [cmd, arg1, arg2] = positional
   const wantsHelp = flags.has("--help") || flags.has("-h")
+  const wantsVersion = flags.has("--version") || flags.has("-v")
   const cfg = loadConfig()
   const opts = {
     json: flags.has("--json"),
@@ -58,6 +59,8 @@ async function main() {
     const child = spawn(process.execPath, [mcpPath], { stdio: "inherit" })
     child.on("exit", (code) => process.exit(code ?? 0))
     return
+  } else if (!cmd && wantsVersion) {
+    console.log(VERSION)
   } else if (!cmd && wantsHelp) {
     console.log(`${HELP_OVERVIEW}\n`)
   } else if (!cmd) {
@@ -89,6 +92,8 @@ async function main() {
     await cmdInit(opts)
   } else if (cmd === "doctor") {
     await cmdDoctor(opts)
+  } else if (cmd === "version") {
+    console.log(VERSION)
   } else if (cmd === "audit" && arg1) {
     await cmdAudit(arg1, opts)
   } else if (cmd === "submit" && arg1) {
