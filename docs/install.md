@@ -89,6 +89,38 @@ MDVP_USE_CACHE=1 npx @mdvp/cli audit myapp.com --fast
 ```
 
 If `cargo` is available, that first static shortcut may compile the Rust analyzer once into `~/.mdvp/native/mdvp-static`; subsequent static audits reuse that binary.
+
+### Npm first-run proof checklist
+
+Before adding MDVP to CI, run this short checklist from a clean shell. It proves the npm package resolves, local prerequisites are visible, the public dataset API is reachable, and the exact browser audit path is either working or has a clear fallback.
+
+```bash
+npm view @mdvp/cli version
+npx @mdvp/cli@latest doctor
+npx @mdvp/cli@latest top 5
+npx @mdvp/cli@latest stats --json
+npx @mdvp/cli@latest audit mdvp.dev --json
+```
+
+Expected success signals:
+
+- `npm view` prints the release version you intend to pin in scripts.
+- `doctor` exits 0 when local blockers are absent; warnings include remediation hints.
+- `top` and `stats --json` work without secrets, cookies, or an MDVP account.
+- `audit mdvp.dev --json` returns a local rendered audit with a numeric score, component scores, and `source` metadata.
+
+If the exact audit fails because Chromium cannot download or launch in your environment, decide whether CI should provide a browser or use the approximate static/cache shortcut:
+
+```bash
+MDVP_USE_CACHE=1 npx @mdvp/cli@latest audit mdvp.dev --fast --json
+```
+
+Treat the static/cache result as a smoke check, not the final browser-backed score. Pin the package version once the checklist passes:
+
+```bash
+npx @mdvp/cli@<version> audit mdvp.dev --check
+```
+
 ## Verify
 
 ```bash
