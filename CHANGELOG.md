@@ -11,7 +11,8 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
-- Crawler nodes now exchange a saved API key for a short-lived scoped credential before claiming or completing hosted queue jobs. The API key is not sent to queue RPC, and rejected credentials stop the worker instead of silently polling.
+- Approved crawler nodes now exchange an operator-enrolled API key for a short-lived scoped credential before claiming or completing hosted queue jobs. Ordinary customer keys cannot mint this credential, the API key is not sent to queue RPC, and rejected credentials stop the worker instead of silently polling.
+- API key configuration is stored with owner-only permissions (`0700` directory, `0600` file), and existing installations are repaired when the config is loaded.
 
 ---
 

@@ -32,6 +32,9 @@ function createCrawlerRpcClient({ apiUrl, apiKey, fetchImpl = fetch, now = () =>
       expiresAt = 0
       return null
     }
+    if (response.status === 403) {
+      throw new CrawlerAuthorizationError('Crawler node is not operator-authorized. Contact contact@tixo.digital for enrollment')
+    }
     if (!response.ok) {
       throw new CrawlerAuthorizationError(`Crawler authorization failed (${response.status}). Run: npx @mdvp/cli login`)
     }

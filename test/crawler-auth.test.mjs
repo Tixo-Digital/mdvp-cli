@@ -95,6 +95,24 @@ describe('crawler RPC authorization', () => {
     )
   })
 
+  it('does not send valid-but-unenrolled contributors into a login loop', async () => {
+    const client = createCrawlerRpcClient({
+      apiUrl: 'https://api.example.test',
+      apiKey: 'ds_valid_but_unenrolled',
+      fetchImpl: async () => jsonResponse(403, { error: 'Crawler worker is not authorized' }),
+    })
+
+    await assert.rejects(
+      client.request('/crawl/claim', { method: 'POST', body: '{}' }),
+      (error) => {
+        assert.equal(error instanceof CrawlerAuthorizationError, true)
+        assert.match(error.message, /not operator-authorized/)
+        assert.doesNotMatch(error.message, /login/i)
+        return true
+      },
+    )
+  })
+
   it('keeps the bundled worker and hire command wired to secret-free env propagation', () => {
     const worker = readFileSync(new URL('../engine/crawler-worker.mjs', import.meta.url), 'utf8')
     const hire = readFileSync(new URL('../commands/hire.mjs', import.meta.url), 'utf8')
