@@ -125,13 +125,14 @@ they intentionally violate, or raise the penalty on one they want banned:
 
 ## Distributed crawling
 
-The public MDVP dataset is built by contributor-run crawler nodes. Any machine with Node.js 18+ and internet access can become a node.
+The public MDVP dataset is built by approved contributor-run crawler nodes. An enrolled MDVP API key, Node.js 18+, and internet access are required; crawler enrollment is operator-managed and has no public grant endpoint. Contributors can request enrollment at `contact@tixo.digital`.
 
 > **Swarm, not peer-to-peer.** Nodes do not talk to each other. There is no peer discovery, gossip, or DHT. Every node independently pulls work from a central coordinator backed by a hosted queue, crawls it, and reports back. This is the classic worker-pool / pull-queue pattern (think Sidekiq or Celery workers), which keeps deduplication, prioritisation, and abuse-prevention in one place. True P2P would add a lot of machinery for little benefit here — a crawler still needs consensus on who crawls what.
 
 ### Starting a node
 
 ```bash
+npx @mdvp/cli login           # one-time API key setup; crawler enrollment is separate
 npx @mdvp/cli hire            # interactive, 2 parallel tabs
 npx @mdvp/cli hire --tabs=4   # more throughput
 npx @mdvp/cli hire --daemon   # background process
@@ -147,6 +148,7 @@ Nodes poll for work using a simple HTTP protocol:
 
 ```
 POST api.mdvp.dev/crawl/claim
+Authorization: Bearer <short-lived-crawler-credential>
 Content-Type: application/json
 
 { "worker_id": "mdvp-abc123" }
@@ -163,6 +165,7 @@ Response (204 — queue empty, retry after POLL_INTERVAL).
 
 ```
 POST api.mdvp.dev/crawl/complete
+Authorization: Bearer <short-lived-crawler-credential>
 Content-Type: application/json
 
 { "job_id": 4711, "status": "done", "site_id": "example.com", "score": 74 }
@@ -173,7 +176,7 @@ Or on failure:
 { "job_id": 4711, "status": "failed", "error": "Navigation timeout" }
 ```
 
-The worker source at [`engine/crawler-worker.mjs`](../engine/crawler-worker.mjs) is the full implementation. It also handles stale job recovery: jobs processing for > 15 minutes are automatically reset to `pending`.
+The worker source at [`engine/crawler-worker.mjs`](../engine/crawler-worker.mjs) is the full implementation. An operator-enrolled MDVP API key is used only to bootstrap a 15-minute crawler credential; ordinary customer API keys cannot mint one. Queue RPC receives that scoped credential, not the API key. It also handles stale job recovery: jobs processing for > 15 minutes are automatically reset to `pending`.
 
 ### What the crawler collects
 
@@ -217,13 +220,14 @@ Results appear in the dataset within ~60 seconds, once a crawler node picks up t
 
 ## Hosted API endpoints (api.mdvp.dev)
 
-These are used by the CLI cloud commands. All require `X-API-Key` except the crawler-node endpoints.
+These are used by the CLI cloud commands. User-facing writes require `X-API-Key`; crawler queue RPC requires a short-lived scoped bearer credential.
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/crawl/submit` | POST | Submit a URL to the crawl queue |
-| `/crawl/claim` | POST | Claim a job (used by crawler nodes, no auth) |
-| `/crawl/complete` | POST | Report job result (used by nodes, no auth) |
+| `/crawl/authorize` | POST | Exchange an operator-enrolled crawler key for a short-lived credential |
+| `/crawl/claim` | POST | Claim a job using a crawler credential |
+| `/crawl/complete` | POST | Report job result using a crawler credential |
 | `/dataset` | GET | Paginated dataset listing |
 | `/dataset/:id` | GET | Single site: score, metrics, grade |
 | `/dataset/stats` | GET | Dataset statistics |

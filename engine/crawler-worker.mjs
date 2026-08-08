@@ -1,7 +1,9 @@
 import puppeteer from 'puppeteer'
 import { readFileSync, existsSync, unlinkSync } from 'fs'
+import { CrawlerAuthorizationError, createCrawlerRpcClient } from './crawler-auth.mjs'
 
 const API = process.env.API_URL || 'https://api.mdvp.dev'
+const API_KEY = process.env.MDVP_API_KEY || ''
 const CHROMIUM_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || undefined
 const BROWSER_WS_ENDPOINT = process.env.MDVP_BROWSER_WS_ENDPOINT || undefined
 const BROWSER_URL = process.env.MDVP_BROWSER_URL || undefined
@@ -10,6 +12,7 @@ const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL || '10000')
 const NODE_ID = process.env.NODE_ID || `worker-${Math.random().toString(36).slice(2, 8)}`
 const TABS = parseInt(process.env.TABS || '2')
 const CONNECTED_BROWSERS = new WeakSet()
+const crawlerRpc = createCrawlerRpcClient({ apiUrl: API, apiKey: API_KEY })
 
 const EXTRACT_SCRIPT = readFileSync(new URL('./extract.js', import.meta.url), 'utf-8').trim()
 
@@ -94,7 +97,7 @@ async function relaunchBrowser(browserState, reason) {
 
 async function claimJob() {
   try {
-    const res = await fetch(`${API}/crawl/claim`, {
+    const res = await crawlerRpc.request('/crawl/claim', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ worker_id: NODE_ID }),
@@ -102,14 +105,15 @@ async function claimJob() {
     if (!res.ok) return null
     const job = await res.json()
     return job.id ? job : null
-  } catch {
+  } catch (error) {
+    if (error instanceof CrawlerAuthorizationError) throw error
     return null
   }
 }
 
 async function reportResult(jobId, result) {
   try {
-    await fetch(`${API}/crawl/complete`, {
+    await crawlerRpc.request('/crawl/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ job_id: jobId, ...result }),
@@ -1349,7 +1353,7 @@ async function processJob(browserState, job, prefetchedResult = null) {
 
     const storeRes = await fetch(`${API}/dataset/store`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
       body: JSON.stringify({
         url: job.url,
         domain: job.domain || new URL(job.url).hostname.replace(/^www\./, ''),
@@ -1366,7 +1370,7 @@ async function processJob(browserState, job, prefetchedResult = null) {
       const body = isBase64 ? { filename, dataBase64: data } : { filename, data: typeof data === 'string' ? data : JSON.stringify(data) }
       return fetch(`${API}/dataset/${stored.id}/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
         body: JSON.stringify(body),
       }).catch(() => {})
     }
@@ -1391,10 +1395,13 @@ async function processJob(browserState, job, prefetchedResult = null) {
 
 async function main() {
   const CRAWL_ONCE = process.env.CRAWL_ONCE
+  const stdoutMode = process.env.CRAWL_ONCE_STDOUT === '1'
+  if (!API_KEY && (!CRAWL_ONCE || !stdoutMode)) {
+    throw new CrawlerAuthorizationError('MDVP_API_KEY is required. Run: npx @mdvp/cli login')
+  }
   const browserState = { current: null, relaunching: null }
 
   if (CRAWL_ONCE) {
-    const stdoutMode = process.env.CRAWL_ONCE_STDOUT === '1'
     const exactMode = process.env.CRAWL_ONCE_EXACT === '1'
     const forceFast = process.env.CRAWL_ONCE_FAST === '1'
     process.stderr.write(`[${NODE_ID}] launching browser...\n`)
