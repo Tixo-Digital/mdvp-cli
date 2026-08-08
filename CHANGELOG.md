@@ -9,6 +9,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- Crawler nodes now exchange a saved API key for a short-lived scoped credential before claiming or completing hosted queue jobs. The API key is not sent to queue RPC, and rejected credentials stop the worker instead of silently polling.
+
 ---
 
 ## [1.35.0] — 2026-06-20

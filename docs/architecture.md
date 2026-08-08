@@ -132,6 +132,7 @@ The public MDVP dataset is built by contributor-run crawler nodes. Any machine w
 ### Starting a node
 
 ```bash
+npx @mdvp/cli login           # one-time API key setup
 npx @mdvp/cli hire            # interactive, 2 parallel tabs
 npx @mdvp/cli hire --tabs=4   # more throughput
 npx @mdvp/cli hire --daemon   # background process
@@ -147,6 +148,7 @@ Nodes poll for work using a simple HTTP protocol:
 
 ```
 POST api.mdvp.dev/crawl/claim
+Authorization: Bearer <short-lived-crawler-credential>
 Content-Type: application/json
 
 { "worker_id": "mdvp-abc123" }
@@ -163,6 +165,7 @@ Response (204 — queue empty, retry after POLL_INTERVAL).
 
 ```
 POST api.mdvp.dev/crawl/complete
+Authorization: Bearer <short-lived-crawler-credential>
 Content-Type: application/json
 
 { "job_id": 4711, "status": "done", "site_id": "example.com", "score": 74 }
@@ -173,7 +176,7 @@ Or on failure:
 { "job_id": 4711, "status": "failed", "error": "Navigation timeout" }
 ```
 
-The worker source at [`engine/crawler-worker.mjs`](../engine/crawler-worker.mjs) is the full implementation. It also handles stale job recovery: jobs processing for > 15 minutes are automatically reset to `pending`.
+The worker source at [`engine/crawler-worker.mjs`](../engine/crawler-worker.mjs) is the full implementation. A saved MDVP API key is used only to bootstrap a 15-minute crawler credential; queue RPC receives that scoped credential, not the API key. It also handles stale job recovery: jobs processing for > 15 minutes are automatically reset to `pending`.
 
 ### What the crawler collects
 
@@ -217,13 +220,14 @@ Results appear in the dataset within ~60 seconds, once a crawler node picks up t
 
 ## Hosted API endpoints (api.mdvp.dev)
 
-These are used by the CLI cloud commands. All require `X-API-Key` except the crawler-node endpoints.
+These are used by the CLI cloud commands. User-facing writes require `X-API-Key`; crawler queue RPC requires a short-lived scoped bearer credential.
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/crawl/submit` | POST | Submit a URL to the crawl queue |
-| `/crawl/claim` | POST | Claim a job (used by crawler nodes, no auth) |
-| `/crawl/complete` | POST | Report job result (used by nodes, no auth) |
+| `/crawl/authorize` | POST | Exchange a valid API key for a short-lived crawler credential |
+| `/crawl/claim` | POST | Claim a job using a crawler credential |
+| `/crawl/complete` | POST | Report job result using a crawler credential |
 | `/dataset` | GET | Paginated dataset listing |
 | `/dataset/:id` | GET | Single site: score, metrics, grade |
 | `/dataset/stats` | GET | Dataset statistics |

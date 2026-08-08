@@ -1,5 +1,4 @@
 import { API } from '../lib/http.mjs'
-import { loadConfig } from '../lib/config.mjs'
 import { DIM, RED, YELLOW } from '../lib/format.mjs'
 import { R } from '../lib/constants.mjs'
 import { spawn } from 'child_process'
@@ -11,9 +10,10 @@ import { dirname, join } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const BUNDLED_WORKER = join(__dirname, '../engine/crawler-worker.mjs')
 const BUNDLED_EXTRACT = join(__dirname, '../engine/extract.js')
+const BUNDLED_CRAWLER_AUTH = join(__dirname, '../engine/crawler-auth.mjs')
 
 async function cmdHire(opts) {
-  const { daemon, tabs, local, _url, _once } = opts
+  const { daemon, tabs, local, _url, _once, apiKey } = opts
   const { spawn } = await import("child_process")
   const { existsSync } = await import("fs")
   const dir = `${homedir()}/.mdvp/crawler`
@@ -23,6 +23,12 @@ async function cmdHire(opts) {
     console.log(`${BOLD}Hiring as crawler node...${R}`)
   }
 
+  if (!apiKey && !(_once && _url && process.env.CRAWL_ONCE_STDOUT === '1')) {
+    console.error(`${RED}No API key. Run: npx @mdvp/cli login${R}`)
+    process.exitCode = 1
+    return
+  }
+
   mkdirSync(dir, { recursive: true })
 
   // Use bundled worker from engine/ — same source as github.com/Tixo-Digital/mdvp-cli
@@ -30,11 +36,13 @@ async function cmdHire(opts) {
     process.stderr.write(`${DIM}Using bundled worker (engine/crawler-worker.mjs)${R}\n`)
     copyFileSync(BUNDLED_WORKER, `${dir}/crawler-worker.mjs`)
     if (existsSync(BUNDLED_EXTRACT)) copyFileSync(BUNDLED_EXTRACT, `${dir}/extract.js`)
+    if (existsSync(BUNDLED_CRAWLER_AUTH)) copyFileSync(BUNDLED_CRAWLER_AUTH, `${dir}/crawler-auth.mjs`)
   } else {
     // Fallback: download from API (development installs, global npx without bundled files)
     process.stderr.write(`${DIM}Downloading worker from ${API}...${R}\n`)
     const workerUrl = `${API}/crawler-worker.mjs`
     const extractUrl = `${API}/extract.js`
+    const authUrl = `${API}/crawler-auth.mjs`
     const download = (url, dest) => new Promise((res, rej) => {
       const { get: g } = pickModule(url)
       g(url, { headers: { Accept: "text/plain" } }, (r) => {
@@ -47,6 +55,8 @@ async function cmdHire(opts) {
       .catch(() => process.stderr.write(`${DIM}Could not download worker${R}\n`))
     await download(extractUrl, `${dir}/extract.js`)
       .catch(() => {})
+    await download(authUrl, `${dir}/crawler-auth.mjs`)
+      .catch(() => process.stderr.write(`${DIM}Could not download crawler authorization helper${R}\n`))
   }
 
   writeFileSync(`${dir}/package.json`, '{"type":"module","dependencies":{"puppeteer":"*"}}')
@@ -80,7 +90,15 @@ async function cmdHire(opts) {
     }
   }
 
-  const env = { ...process.env, ...chromiumEnv, NODE_ID: nodeId, TABS: String(tabs || 2), API_URL: apiUrl, ...(_url ? { CRAWL_ONCE: _url } : {}) }
+  const env = {
+    ...process.env,
+    ...chromiumEnv,
+    NODE_ID: nodeId,
+    TABS: String(tabs || 2),
+    API_URL: apiUrl,
+    ...(apiKey ? { MDVP_API_KEY: apiKey } : {}),
+    ...(_url ? { CRAWL_ONCE: _url } : {}),
+  }
 
   if (_once && _url) {
     process.stderr.write(`${DIM}running local crawl for ${_url}...${R}\n`)
