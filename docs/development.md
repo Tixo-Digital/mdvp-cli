@@ -12,9 +12,11 @@ npm ci
 
 Node 18+ is required. Default audits are browser-backed and use Puppeteer, so a Chromium-compatible browser is needed for full smoke testing. Rust is optional but recommended when working on the static analyzer; that analyzer is used by the opt-in `MDVP_USE_CACHE=1 audit --fast` shortcut.
 
-## Cloud Codex / Devbox
+## Local Codex / Devbox
 
-Nightly automation runs in Cloud Codex and should use the repository devbox environment when available:
+Nightly automation runs from the local canonical checkout by default. Keep the canonical checkout untouched when it is dirty, create an isolated worktree from `origin/main`, claim a GitLab coordination issue, and push the feature branch before editing.
+
+Use the repository devbox environment when available:
 
 ```bash
 devbox shell
@@ -24,7 +26,9 @@ devbox run smoke
 
 [`devbox.json`](../devbox.json) pins Node 22, Git, GitHub CLI, GitLab CLI, `jq`, and Chromium. The shell exports `PUPPETEER_EXECUTABLE_PATH` to the devbox Chromium and sets `PUPPETEER_SKIP_DOWNLOAD=true`, so browser smokes can run without apt/snap or a local desktop Chrome. Chromium is excluded on `aarch64-darwin`, where the local Chrome for Testing install is used instead.
 
-Use `devbox run audit-smoke` for the bounded browser smoke when the runner allows Chromium. If the Cloud Codex runner blocks headless browser launch, document the skip or hang in the GitLab handoff and rely on `verify`, `smoke`, and GitHub CI.
+Use `devbox run audit-smoke` for the bounded browser smoke when the local runner allows Chromium. If devbox or headless browser launch is unavailable, document the skip or hang in the GitLab handoff and run the npm fallbacks: `npm ci`, `npm test`, `npm pack --dry-run`, `node cli.mjs help`, `node cli.mjs top 5`, and `node cli.mjs stats --json`.
+
+Cloud Codex remains a manual fallback environment, not the scheduled nightly target. When using it, follow the same GitLab claim protocol and keep publishing through GitHub Actions / Trusted Publishing rather than local `npm publish`.
 
 ## Nix
 
@@ -140,7 +144,7 @@ The package uses [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)
 
 ## Nightly releases
 
-Nightly automation ships prerelease artifacts from Cloud Codex / GitHub Actions, not from a local laptop. Local agent work may prepare a branch, PR, version bump, and tag, but publishing must happen through the release workflow so npm provenance and GitHub release history stay reproducible.
+Nightly automation may prepare prerelease branches, PRs, version bumps, and tags from the local runner or a manual Cloud Codex fallback, but publishing must happen through GitHub Actions so npm provenance and GitHub release history stay reproducible.
 
 Use a semver prerelease version:
 
