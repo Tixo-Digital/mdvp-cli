@@ -38,6 +38,43 @@ npx @mdvp/cli mcp-config
 npx @mdvp/cli mcp
 ```
 
+## Copy-Paste Prompts
+
+Use these prompts when you want an agent to run MDVP and return a bounded, reviewable design-quality finding instead of a broad redesign.
+
+### Local Preview Audit
+
+```text
+Run `npx @mdvp/cli doctor`, then audit <preview-url> with `npx @mdvp/cli audit <preview-url> --json`.
+Report the grade, overall score, source, weakest component, and at most two concrete findings.
+Do not redesign the whole page. Patch only the smallest UI issue that is clearly supported by the audit evidence, then re-run the same audit command and summarize the delta.
+```
+
+### Pull Request Gate
+
+```text
+Set up MDVP as a PR design-quality gate with `npx @mdvp/cli init --github-action`.
+Keep thresholds explicit in `.mdvprc`, explain what each threshold protects, and do not add a stricter threshold unless the current page already passes it.
+Run `npx @mdvp/cli audit <preview-url> --check` and report whether the gate passed, failed, or needs a preview URL.
+```
+
+### MCP Agent Audit
+
+```text
+Use the MDVP MCP server to call `audit_url` for <public-url>.
+If the user asks why the score changed or what to fix, call `perceive_url` next and cite the component breakdown plus one or two recommendations.
+Do not call `submit_for_crawl` unless the user explicitly wants this public URL added to the dataset.
+```
+
+### Private Page Safety
+
+```text
+Audit <private-url> locally only.
+Do not use `--swarm`, `submit`, hosted dataset commands, or `submit_for_crawl`.
+Do not print, store, or upload cookies, tokens, browser storage, screenshots with secrets, or private DOM content.
+If authenticated state is required, use the user's local Chrome debugging endpoint through `MDVP_BROWSER_URL` and report `source=local`.
+```
+
 ## What To Report
 
 Good agent handoffs mention the score, source, weakest component, and one or two fixable findings:
