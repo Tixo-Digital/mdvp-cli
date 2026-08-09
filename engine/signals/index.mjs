@@ -21,6 +21,7 @@ import gradientBackground from './gradient-background.mjs'
 import glassmorphismOveruse from './glassmorphism-overuse.mjs'
 import emojiIcons from './emoji-icons.mjs'
 import genericMarketingCopy from './generic-marketing-copy.mjs'
+import genericCtaCopy from './generic-cta-copy.mjs'
 import centeredMaxWidthLayout from './centered-max-width-layout.mjs'
 import uniformButtonStyle from './uniform-button-style.mjs'
 
@@ -43,6 +44,7 @@ export const SIGNALS = [
   glassmorphismOveruse,
   emojiIcons,
   genericMarketingCopy,
+  genericCtaCopy,
   centeredMaxWidthLayout,
   uniformButtonStyle,
 ]
