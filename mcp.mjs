@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import { VERSION } from "./lib/constants.mjs";
+import { signalRows } from "./commands/signals.mjs";
 import https from "https";
 import { readFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
+import { pathToFileURL } from "url";
 
 // Load API key — env var takes precedence over config file
 let apiKey = process.env.MDVP_API_KEY || "";
@@ -18,6 +25,7 @@ if (!apiKey) {
 }
 
 const API_BASE = "https://api.mdvp.dev";
+const SIGNALS_RESOURCE_URI = "mdvp://signals";
 
 function request(method, path, body, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
@@ -47,8 +55,41 @@ function domainFrom(url) {
 
 const server = new Server(
   { name: "mdvp", version: VERSION },
-  { capabilities: { tools: {} } }
+  { capabilities: { tools: {}, resources: {} } }
 );
+
+function listResources() {
+  return {
+    resources: [
+      {
+        uri: SIGNALS_RESOURCE_URI,
+        name: "MDVP signal catalog",
+        description: "Built-in originality and generated-UI signal detectors exposed as stable JSON.",
+        mimeType: "application/json",
+      },
+    ],
+  };
+}
+
+function readResource(uri) {
+  if (uri !== SIGNALS_RESOURCE_URI) {
+    throw new Error(`Unknown resource: ${uri}`);
+  }
+
+  return {
+    contents: [
+      {
+        uri: SIGNALS_RESOURCE_URI,
+        mimeType: "application/json",
+        text: JSON.stringify(signalRows(), null, 2),
+      },
+    ],
+  };
+}
+
+server.setRequestHandler(ListResourcesRequestSchema, async () => listResources());
+
+server.setRequestHandler(ReadResourceRequestSchema, async (req) => readResource(req.params.uri));
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
@@ -166,5 +207,19 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   return { content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }] };
 });
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+async function startServer() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectRun) {
+  await startServer();
+}
+
+export {
+  SIGNALS_RESOURCE_URI,
+  listResources,
+  readResource,
+  startServer,
+};

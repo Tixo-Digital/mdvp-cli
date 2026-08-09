@@ -1,6 +1,6 @@
 # MCP server
 
-`@mdvp/cli` ships a [Model Context Protocol](https://modelcontextprotocol.io) server. Any MCP-compatible agent — Claude, Cursor, OpenCode, Windsurf, Cline, Continue — can score URLs, get the full design perception, and submit sites to the dataset, with no API key for the public-dataset paths.
+`@mdvp/cli` ships a [Model Context Protocol](https://modelcontextprotocol.io) server. Any MCP-compatible agent — Claude, Cursor, OpenCode, Windsurf, Cline, Continue — can score URLs, get the full design perception, inspect MDVP's built-in signal catalog, and submit sites to the dataset, with no API key for the public-dataset paths.
 
 ## Run the server
 
@@ -115,6 +115,20 @@ The `audit_url`, `perceive_url`, `top_sites`, and `compare_sites` tools work **w
 | `submit_for_crawl` | key | Submit a URL — adds it to the public dataset, results in ~60s. |
 
 The full list of tool parameters is in [`mcp.mjs`](../mcp.mjs).
+
+## Resources
+
+The server also exposes read-only MCP resources for agent context:
+
+| Resource | MIME type | What it returns |
+|---|---|---|
+| `mdvp://signals` | `application/json` | Built-in originality and generated-UI signal detectors, with `id`, `label`, `penalty`, `weight`, and `rationale`. |
+
+Use `mdvp://signals` when an agent needs to explain what MDVP can detect, choose whether to run an audit, or map an audit finding back to the detector rationale. The JSON is derived from the same registry as:
+
+```bash
+npx @mdvp/cli signals --json
+```
 
 ## Example: scoring from an agent
 
