@@ -276,6 +276,7 @@ export async function cmdAuditLocal(domain, opts = {}) {
       worst: sorted.slice(0, 3).map((b) => ({ key: b.c, score: b.s })),
     },
     recommendations: score.recommendations,
+    actions: score.actions,
   }
   if (result.analysis) payload.analysis = result.analysis
   if (specResult) {

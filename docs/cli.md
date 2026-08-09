@@ -67,6 +67,18 @@ Lowest: originality (38) · color (44) · spacing (51)
 
 JSON output adds a `source` field (`"local"`, `"static"`, `"cloud"`, or `"swarm"`) so consumers can tell where the result came from. Default exact results use `"local"`. Static/cache shortcut results use `"static"` and include an `analysis` object that names the analyzer and limitations.
 
+Local and static JSON also include `actions`, a stable remediation list for CI bots and agents. The existing `recommendations` array remains for compatibility; use `actions` when you need category, severity, and source fields without parsing prose.
+
+```json
+{
+  "category": "typography",
+  "severity": "warn",
+  "message": "4 font families. Professional limit: 2",
+  "source": "score:typography",
+  "score": 62
+}
+```
+
 Environment:
 
 | Variable | What it does |
